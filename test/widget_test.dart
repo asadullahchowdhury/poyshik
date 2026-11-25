@@ -1,12 +1,59 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:poyshik/app/app.dart';
 
-void main() {
-  testWidgets('App starts on the design gallery', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: PoyshikApp()));
-    await tester.pumpAndSettle();
+Future<void> _pumpApp(WidgetTester tester) async {
+  await tester.pumpWidget(const ProviderScope(child: PoyshikApp()));
+  await tester.pumpAndSettle();
+}
 
-    expect(find.text('Design system'), findsOneWidget);
+void main() {
+  testWidgets('starts on Home with four tabs', (tester) async {
+    await _pumpApp(tester);
+
+    expect(find.text('Your month at a glance'), findsOneWidget);
+    for (final tab in ['Home', 'Activity', 'Insights', 'More']) {
+      expect(find.text(tab), findsWidgets);
+    }
+  });
+
+  testWidgets('switches tabs', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.text('Activity'));
+    await tester.pumpAndSettle();
+    expect(find.text('No transactions yet'), findsOneWidget);
+
+    await tester.tap(find.text('Insights'));
+    await tester.pumpAndSettle();
+    expect(find.text('Insights need a little data'), findsOneWidget);
+  });
+
+  testWidgets('add button opens the entry sheet', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.byIcon(Icons.add_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Quick entry arrives in Phase 1.'), findsOneWidget);
+  });
+
+  testWidgets('More opens the design gallery and keeps tab state', (
+    tester,
+  ) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.text('More'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Design system'));
+    await tester.pumpAndSettle();
+    expect(find.text('SPENT IN NOVEMBER'), findsOneWidget);
+
+    // Leave and come back: the More tab still shows the gallery.
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('More'));
+    await tester.pumpAndSettle();
+    expect(find.text('SPENT IN NOVEMBER'), findsOneWidget);
   });
 }

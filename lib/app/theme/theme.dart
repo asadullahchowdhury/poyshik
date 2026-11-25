@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'colors.dart';
@@ -52,7 +53,8 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
-        titleTextStyle: AppType.titleMedium.copyWith(color: c.ink),
+        titleTextStyle: AppType.titleLarge.copyWith(color: c.ink),
+        systemOverlayStyle: _overlay(brightness, c),
       ),
       dividerTheme: DividerThemeData(color: c.hairline, thickness: 1, space: 1),
       filledButtonTheme: FilledButtonThemeData(
@@ -101,6 +103,21 @@ abstract final class AppTheme {
       ),
     );
   }
+}
+
+/// Transparent system bars with icons that contrast the theme.
+SystemUiOverlayStyle _overlay(Brightness brightness, PoyshikColors c) {
+  final isLight = brightness == Brightness.light;
+  final icons = isLight ? Brightness.dark : Brightness.light;
+  return SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: icons,
+    statusBarBrightness: brightness,
+    systemNavigationBarColor: c.surface,
+    systemNavigationBarIconBrightness: icons,
+    systemNavigationBarDividerColor: c.hairline,
+    systemNavigationBarContrastEnforced: false,
+  );
 }
 
 /// Short access to Poyshik tokens: `context.colors.accent`.

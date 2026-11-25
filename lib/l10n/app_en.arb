@@ -7,5 +7,32 @@
   "appTagline": "Know where your money goes.",
   "@appTagline": {
     "description": "Short product promise shown under the app name."
-  }
+  },
+
+  "tabHome": "Home",
+  "tabActivity": "Activity",
+  "tabInsights": "Insights",
+  "tabMore": "More",
+  "addTransaction": "Add transaction",
+  "@addTransaction": {
+    "description": "Accessibility label and sheet title for the central + button."
+  },
+
+  "homeEmptyTitle": "Your month at a glance",
+  "homeEmptyMessage": "Spending, budget and balances will live here.",
+  "activityEmptyTitle": "No transactions yet",
+  "activityEmptyMessage": "Everything you log will show up here, grouped by day.",
+  "insightsEmptyTitle": "Insights need a little data",
+  "insightsEmptyMessage": "Log a few expenses and your patterns will appear here.",
+  "addSheetPlaceholder": "Quick entry arrives in Phase 1.",
+
+  "moreAccounts": "Accounts",
+  "moreCategories": "Categories",
+  "moreBudget": "Budget",
+  "moreBackup": "Backup & export",
+  "moreSettings": "Settings",
+  "moreDeveloper": "Developer",
+  "moreDesignSystem": "Design system",
+  "moreDatabase": "Database",
+  "comingSoon": "Soon"
 }

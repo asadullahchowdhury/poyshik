@@ -1,0 +1,71 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../features/dev/component_gallery_screen.dart';
+import '../features/home/home_screen.dart';
+import '../features/insights/insights_screen.dart';
+import '../features/settings/more_screen.dart';
+import '../features/transactions/activity_screen.dart';
+import 'shell/app_shell.dart';
+
+/// Route paths, so screens never hard-code strings.
+abstract final class Routes {
+  static const home = '/home';
+  static const activity = '/activity';
+  static const insights = '/insights';
+  static const more = '/more';
+  static const gallery = '/more/gallery';
+}
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final router = GoRouter(
+    initialLocation: Routes.home,
+    routes: [
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => AppShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.home,
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.activity,
+                builder: (context, state) => const ActivityScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.insights,
+                builder: (context, state) => const InsightsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.more,
+                builder: (context, state) => const MoreScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'gallery',
+                    builder: (context, state) => const ComponentGalleryScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+  ref.onDispose(router.dispose);
+  return router;
+});

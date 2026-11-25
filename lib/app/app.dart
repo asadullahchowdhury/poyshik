@@ -1,18 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../features/dev/component_gallery_screen.dart';
 import '../l10n/app_localizations.dart';
+import 'router.dart';
 import 'theme/theme.dart';
 import 'theme/theme_mode_provider.dart';
 
-/// Root widget. The router replaces the temporary gallery home in step 0.4.
+/// Root widget: theme, localization and the router.
 class PoyshikApp extends ConsumerWidget {
   const PoyshikApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return MaterialApp(
+    return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
@@ -25,7 +25,7 @@ class PoyshikApp extends ConsumerWidget {
         ...GlobalMaterialLocalizations.delegates,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const ComponentGalleryScreen(),
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }
