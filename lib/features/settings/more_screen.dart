@@ -64,7 +64,11 @@ class MoreScreen extends StatelessWidget {
                   label: l10n.moreDesignSystem,
                   onTap: () => context.go(Routes.gallery),
                 ),
-                _Item(icon: Icons.storage_rounded, label: l10n.moreDatabase),
+                _Item(
+                  icon: Icons.storage_rounded,
+                  label: l10n.moreDatabase,
+                  onTap: () => context.go(Routes.database),
+                ),
               ],
             ),
           ],

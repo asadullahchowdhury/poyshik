@@ -1,0 +1,12 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Human-readable ISO dates in the database file.
+          store_date_time_values_as_text: true
+          # Schema snapshots for migration tests (dart run drift_dev make-migrations).
+          databases:
+            app: lib/data/db/app_database.dart
+          schema_dir: drift_schemas/
+          test_dir: test/drift/
