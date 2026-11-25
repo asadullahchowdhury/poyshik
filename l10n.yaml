@@ -1,0 +1,6 @@
+# Flutter gen-l10n config. Run automatically by `flutter pub get` / builds.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

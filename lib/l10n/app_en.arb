@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "Poyshik",
+  "@appTitle": {
+    "description": "The app's name, shown in the task switcher and on the placeholder screen."
+  },
+  "appTagline": "Know where your money goes.",
+  "@appTagline": {
+    "description": "Short product promise shown under the app name."
+  }
+}
