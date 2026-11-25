@@ -15,8 +15,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // Permanent once published on Google Play. Debug builds append ".dev" (see buildTypes).
         applicationId = "com.rahat.poyshik"
+        manifestPlaceholders["appName"] = "Poyshik"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -30,6 +31,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs side by side with the release app, so development builds
+            // and test data never touch real data. Shown as "Poyshik Dev".
+            applicationIdSuffix = ".dev"
+            manifestPlaceholders["appName"] = "Poyshik Dev"
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
