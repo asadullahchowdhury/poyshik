@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
 import '../../app/theme/theme_mode_provider.dart';
+import '../../core/money/amount_input.dart';
+import '../../core/money/money.dart';
 import '../../core/widgets/amount_text.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../core/widgets/numpad.dart';
@@ -22,32 +24,7 @@ class ComponentGalleryScreen extends ConsumerStatefulWidget {
 
 class _ComponentGalleryScreenState
     extends ConsumerState<ComponentGalleryScreen> {
-  String _entry = '';
-
-  int get _entryMinor {
-    if (_entry.isEmpty || _entry == '.') return 0;
-    final parts = _entry.split('.');
-    final whole = int.parse(parts[0].isEmpty ? '0' : parts[0]);
-    final frac = parts.length > 1 ? parts[1].padRight(2, '0') : '00';
-    return whole * 100 + int.parse(frac);
-  }
-
-  void _onKey(String k) {
-    setState(() {
-      if (k == '.') {
-        if (!_entry.contains('.')) _entry = _entry.isEmpty ? '0.' : '$_entry.';
-        return;
-      }
-      final dot = _entry.indexOf('.');
-      if (dot != -1 && _entry.length - dot > 2) return; // max 2 decimals
-      if (dot == -1 && _entry.replaceAll('.', '').length >= 9) return;
-      if (_entry == '0') {
-        _entry = k;
-      } else {
-        _entry += k;
-      }
-    });
-  }
+  AmountInput _entry = const AmountInput();
 
   @override
   Widget build(BuildContext context) {
@@ -94,14 +71,14 @@ class _ComponentGalleryScreenState
                   style: AppType.overline.copyWith(color: c.inkMuted),
                 ),
                 const SizedBox(height: Space.sm),
-                const AmountText(1248000, size: AmountSize.hero),
+                const AmountText(Money(1248000), size: AmountSize.hero),
                 const SizedBox(height: Space.xs),
                 Text.rich(
                   TextSpan(
                     style: AppType.label.copyWith(color: c.inkMuted),
                     children: const [
                       TextSpan(text: 'of '),
-                      TextSpan(text: '৳20,000 budget'),
+                      TextSpan(text: 'à§³20,000 budget'),
                     ],
                   ),
                 ),
@@ -125,7 +102,7 @@ class _ComponentGalleryScreenState
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
                             children: [
-                              const AmountText(125300),
+                              const AmountText(Money(125300)),
                               Text(
                                 ' /day',
                                 style: AppType.label.copyWith(
@@ -207,7 +184,7 @@ class _ComponentGalleryScreenState
                   icon: Icons.restaurant_rounded,
                   color: pal[0],
                   title: 'Food',
-                  subtitle: 'Cash · 1:24 PM',
+                  subtitle: 'Cash Â· 1:24 PM',
                   amountMinor: 32000,
                   tone: AmountTone.expense,
                 ),
@@ -215,7 +192,7 @@ class _ComponentGalleryScreenState
                   icon: Icons.directions_bus_rounded,
                   color: pal[4],
                   title: 'Transport',
-                  subtitle: 'bKash · 9:10 AM',
+                  subtitle: 'bKash Â· 9:10 AM',
                   amountMinor: 6000,
                   tone: AmountTone.expense,
                 ),
@@ -223,15 +200,15 @@ class _ComponentGalleryScreenState
                   icon: Icons.work_rounded,
                   color: pal[2],
                   title: 'Salary',
-                  subtitle: 'Bank · Yesterday',
+                  subtitle: 'Bank Â· Yesterday',
                   amountMinor: 6500000,
                   tone: AmountTone.income,
                 ),
                 _TxRow(
                   icon: Icons.swap_horiz_rounded,
                   color: c.transfer,
-                  title: 'Bank → bKash',
-                  subtitle: 'Transfer · Yesterday',
+                  title: 'Bank â†’ bKash',
+                  subtitle: 'Transfer Â· Yesterday',
                   amountMinor: 500000,
                   tone: AmountTone.transfer,
                   isLast: true,
@@ -268,10 +245,10 @@ class _ComponentGalleryScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AmountText(12500000, size: AmountSize.large),
+                const AmountText(Money(12500000), size: AmountSize.large),
                 const SizedBox(height: Space.xs),
                 const AmountText(
-                  48050,
+                  Money(48050),
                   tone: AmountTone.expense,
                   showSign: true,
                 ),
@@ -285,11 +262,11 @@ class _ComponentGalleryScreenState
                   style: AppType.titleMedium.copyWith(color: c.ink),
                 ),
                 Text(
-                  'Body — Groceries from Shwapno, split with Rafi.',
+                  'Body â€” Groceries from Shwapno, split with Rafi.',
                   style: AppType.body.copyWith(color: c.ink),
                 ),
                 Text(
-                  'Label — Cash · 2:15 PM',
+                  'Label â€” Cash Â· 2:15 PM',
                   style: AppType.label.copyWith(color: c.inkMuted),
                 ),
                 Text(
@@ -338,16 +315,13 @@ class _ComponentGalleryScreenState
                   style: AppType.overline.copyWith(color: c.expense),
                 ),
                 const SizedBox(height: Space.sm),
-                AmountText(_entryMinor, size: AmountSize.hero),
+                AmountText(_entry.value, size: AmountSize.hero),
                 const SizedBox(height: Space.xl),
                 Numpad(
-                  onKey: _onKey,
-                  onBackspace: () => setState(() {
-                    if (_entry.isNotEmpty) {
-                      _entry = _entry.substring(0, _entry.length - 1);
-                    }
-                  }),
-                  onClear: () => setState(() => _entry = ''),
+                  onKey: (k) => setState(() => _entry = _entry.press(k)),
+                  onBackspace: () =>
+                      setState(() => _entry = _entry.backspace()),
+                  onClear: () => setState(() => _entry = _entry.clear()),
                 ),
               ],
             ),
@@ -445,7 +419,7 @@ class _MiniStat extends StatelessWidget {
             style: AppType.label.copyWith(color: context.colors.inkMuted),
           ),
           const SizedBox(height: Space.xs),
-          AmountText(amountMinor),
+          AmountText(Money(amountMinor)),
         ],
       ),
     );
@@ -492,7 +466,7 @@ class _AccountChip extends StatelessWidget {
                   name,
                   style: AppType.label.copyWith(color: context.colors.inkMuted),
                 ),
-                AmountText(amountMinor, size: AmountSize.small),
+                AmountText(Money(amountMinor), size: AmountSize.small),
               ],
             ),
           ],
@@ -553,7 +527,7 @@ class _TxRow extends StatelessWidget {
                   ),
                 ),
                 AmountText(
-                  amountMinor,
+                  Money(amountMinor),
                   size: AmountSize.small,
                   tone: tone,
                   showSign: tone != AmountTone.transfer,

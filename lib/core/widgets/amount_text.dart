@@ -1,18 +1,20 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
+import '../money/money.dart';
+import '../money/money_format.dart';
 
 enum AmountSize { hero, large, medium, small }
 
 enum AmountTone { neutral, expense, income, transfer }
 
-/// Displays a money amount given in poisha (1 ৳ = 100 poisha).
+/// Displays a [Money] amount.
 ///
 /// The number is the hero: the ৳ sign and any decimals are drawn smaller and
 /// muted so the whole-taka figure reads first.
 class AmountText extends StatelessWidget {
   const AmountText(
-    this.amountMinor, {
+    this.amount, {
     super.key,
     this.size = AmountSize.medium,
     this.tone = AmountTone.neutral,
@@ -20,8 +22,8 @@ class AmountText extends StatelessWidget {
     this.color,
   });
 
-  /// Amount in poisha. Sign is taken from [tone], not from this value.
-  final int amountMinor;
+  /// Shown as an absolute value; the sign comes from [tone] and [showSign].
+  final Money amount;
   final AmountSize size;
   final AmountTone tone;
 
@@ -57,13 +59,11 @@ class AmountText extends StatelessWidget {
       letterSpacing: 0,
     );
 
-    final abs = amountMinor.abs();
-    final whole = _groupIndian(abs ~/ 100);
-    final fraction = abs % 100;
+    final p = MoneyFormat.parts(amount.abs());
     final sign = !showSign
         ? ''
         : switch (tone) {
-            AmountTone.expense => '−', // proper minus sign
+            AmountTone.expense => MoneyFormat.minus,
             AmountTone.income => '+',
             _ => '',
           };
@@ -73,33 +73,13 @@ class AmountText extends StatelessWidget {
         style: base.copyWith(color: mainColor),
         children: [
           if (sign.isNotEmpty) TextSpan(text: sign),
-          TextSpan(text: '৳', style: small),
-          TextSpan(text: whole),
-          if (fraction != 0)
-            TextSpan(
-              text: '.${fraction.toString().padLeft(2, '0')}',
-              style: small,
-            ),
+          TextSpan(text: p.symbol, style: small),
+          TextSpan(text: p.whole),
+          if (p.fraction.isNotEmpty) TextSpan(text: p.fraction, style: small),
         ],
       ),
       maxLines: 1,
       softWrap: false,
     );
-  }
-
-  // TEMPORARY: replaced by the Money formatter in step 0.5.
-  // South Asian grouping: 1,25,000 (last three digits, then pairs).
-  static String _groupIndian(int value) {
-    final s = value.toString();
-    if (s.length <= 3) return s;
-    final last3 = s.substring(s.length - 3);
-    var rest = s.substring(0, s.length - 3);
-    final parts = <String>[];
-    while (rest.length > 2) {
-      parts.insert(0, rest.substring(rest.length - 2));
-      rest = rest.substring(0, rest.length - 2);
-    }
-    if (rest.isNotEmpty) parts.insert(0, rest);
-    return '${parts.join(',')},$last3';
   }
 }
