@@ -3,13 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:poyshik/app/app.dart';
 
 void main() {
-  testWidgets('App starts and shows localized title and tagline', (
-    tester,
-  ) async {
+  testWidgets('App starts on the design gallery', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: PoyshikApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Poyshik'), findsOneWidget);
-    expect(find.text('Know where your money goes.'), findsOneWidget);
+    expect(find.text('Design system'), findsOneWidget);
   });
 }
