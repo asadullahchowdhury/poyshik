@@ -7,6 +7,8 @@ import '../features/dev/component_gallery_screen.dart';
 import '../features/dev/database_debug_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/insights/insights_screen.dart';
+import '../features/onboarding/onboarding_screen.dart';
+import '../features/onboarding/onboarding_service.dart';
 import '../features/settings/backup_screen.dart';
 import '../features/settings/more_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -15,6 +17,7 @@ import 'shell/app_shell.dart';
 
 /// Route paths, so screens never hard-code strings.
 abstract final class Routes {
+  static const welcome = '/welcome';
   static const home = '/home';
   static const activity = '/activity';
   static const insights = '/insights';
@@ -30,7 +33,19 @@ abstract final class Routes {
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: Routes.home,
+    // First launch goes through setup; afterwards /welcome is unreachable.
+    redirect: (context, state) {
+      final needsSetup = ref.read(onboardingProvider);
+      final atWelcome = state.matchedLocation == Routes.welcome;
+      if (needsSetup && !atWelcome) return Routes.welcome;
+      if (!needsSetup && atWelcome) return Routes.home;
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: Routes.welcome,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [

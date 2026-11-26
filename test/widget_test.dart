@@ -5,13 +5,15 @@ import 'package:poyshik/core/money/money.dart';
 import 'package:poyshik/features/accounts/accounts_repository.dart';
 import 'package:poyshik/features/budgets/budget_repository.dart';
 import 'package:poyshik/features/home/summary_repository.dart';
+import 'package:poyshik/features/onboarding/onboarding_service.dart';
 import 'package:poyshik/features/transactions/transactions_repository.dart';
 
-Future<void> _pumpApp(WidgetTester tester) async {
+Future<void> _pumpApp(WidgetTester tester, {bool firstLaunch = false}) async {
   await tester.pumpWidget(
     ProviderScope(
       // Widget tests avoid the real database; data logic is tested in test/data.
       overrides: [
+        startupNeedsOnboardingProvider.overrideWithValue(firstLaunch),
         transactionViewsProvider.overrideWith((ref) => Stream.value(const [])),
         filteredViewsProvider.overrideWith((ref) => Stream.value(const [])),
         activeAccountsProvider.overrideWith((ref) => Stream.value(const [])),
@@ -45,6 +47,22 @@ void main() {
     for (final tab in ['Home', 'Activity', 'Insights', 'More']) {
       expect(find.text(tab), findsWidgets);
     }
+  });
+
+  testWidgets('first launch goes through setup pages', (tester) async {
+    await _pumpApp(tester, firstLaunch: true);
+
+    expect(find.text('Get started'), findsOneWidget);
+    expect(find.text('Home'), findsNothing); // no tab bar during setup
+
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+    expect(find.text("Where's your money?"), findsOneWidget);
+    expect(find.text('bKash'), findsOneWidget);
+
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('A monthly budget?'), findsOneWidget);
   });
 
   testWidgets('switches tabs', (tester) async {
