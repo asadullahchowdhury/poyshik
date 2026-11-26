@@ -7,10 +7,12 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
 import '../../core/dates/periods.dart';
+import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../l10n/app_localizations.dart';
+import 'activity_filter_bar.dart';
 import 'add_transaction_sheet.dart';
 import 'day_groups.dart';
 import 'transaction_tile.dart';
@@ -22,33 +24,77 @@ class ActivityScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final views = ref.watch(transactionViewsProvider);
+    final c = context.colors;
+    final hasAny =
+        (ref.watch(transactionViewsProvider).value ?? const []).isNotEmpty;
+    final filter = ref.watch(activityFilterProvider);
+    final views = ref.watch(filteredViewsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabActivity)),
-      body: views.when(
-        loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (list) {
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.receipt_long_rounded,
-              title: l10n.activityEmptyTitle,
-              message: l10n.activityEmptyMessage,
-            );
-          }
-          final groups = groupByDay(list);
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(
-              Space.screen,
-              Space.xs,
-              Space.screen,
-              Space.huge,
+      body: Column(
+        children: [
+          if (hasAny || filter.isActive) const ActivityFilterBar(),
+          Expanded(
+            child: views.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, _) => Center(child: Text('$e')),
+              data: (list) {
+                if (list.isEmpty) {
+                  return filter.isActive
+                      ? EmptyState(
+                          icon: Icons.search_off_rounded,
+                          title: l10n.activityNoMatches,
+                          message: l10n.activityNoMatchesHint,
+                        )
+                      : EmptyState(
+                          icon: Icons.receipt_long_rounded,
+                          title: l10n.activityEmptyTitle,
+                          message: l10n.activityEmptyMessage,
+                        );
+                }
+                final groups = groupByDay(list);
+                final spent = groups.fold(
+                  Money.zero,
+                  (sum, g) => sum + g.spent,
+                );
+                return ListView.builder(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(
+                    Space.screen,
+                    Space.xs,
+                    Space.screen,
+                    Space.huge,
+                  ),
+                  itemCount: groups.length + (filter.isActive ? 1 : 0),
+                  itemBuilder: (context, i) {
+                    if (filter.isActive && i == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          Space.xs,
+                          Space.sm,
+                          Space.xs,
+                          0,
+                        ),
+                        child: Text(
+                          l10n.activityResults(
+                            list.length,
+                            MoneyFormat.format(spent),
+                          ),
+                          style: AppType.label.copyWith(color: c.inkMuted),
+                        ),
+                      );
+                    }
+                    return _DaySection(
+                      group: groups[i - (filter.isActive ? 1 : 0)],
+                    );
+                  },
+                );
+              },
             ),
-            itemCount: groups.length,
-            itemBuilder: (context, i) => _DaySection(group: groups[i]),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

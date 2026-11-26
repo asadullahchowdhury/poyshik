@@ -75,6 +75,23 @@
   "txNoAccounts": "Add an account first",
   "txPickCategory": "Pick a category",
   "txDeleted": "Transaction deleted",
+  "activitySearchHint": "Search notes, categories, amounts",
+  "activityNoMatches": "No matches",
+  "activityNoMatchesHint": "Try a different word, amount or filter.",
+  "activityResults": "{count, plural, =1{1 result} other{{count} results}} · {spent} spent",
+  "@activityResults": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "spent": { "type": "String" }
+    }
+  },
+  "filterType": "Type",
+  "filterAccount": "Account",
+  "filterCategory": "Category",
+  "filterMonth": "Month",
+  "filterAll": "All",
+  "filterAllTime": "All time",
+  "filterClear": "Clear",
   "categoriesTitle": "Categories",
   "categoriesAdd": "Add category",
   "categoriesReorderHint": "Hold and drag to reorder. Most-used categories still come first when logging.",

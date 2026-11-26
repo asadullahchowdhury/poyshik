@@ -1,12 +1,39 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/dates/periods.dart';
 import '../../core/money/money.dart';
 import '../../data/db/app_database.dart';
 import '../../data/db/database_provider.dart';
 import '../../data/settings_repository.dart';
 
-/// The fields of an expense or income entry (transfers come later).
+/// Activity search and filters. Every field is optional; empty = everything.
+typedef TransactionFilter = ({
+  String query,
+  TransactionType? type,
+  String? accountId,
+  String? categoryId,
+  DateRange? range,
+});
+
+const TransactionFilter noFilter = (
+  query: '',
+  type: null,
+  accountId: null,
+  categoryId: null,
+  range: null,
+);
+
+extension TransactionFilterX on TransactionFilter {
+  bool get isActive =>
+      query.trim().isNotEmpty ||
+      type != null ||
+      accountId != null ||
+      categoryId != null ||
+      range != null;
+}
+
+/// The fields of an expense, income or transfer entry.
 typedef TransactionDraft = ({
   TransactionType type,
   Money amount,
@@ -74,10 +101,28 @@ class TransactionsRepository {
   Future<void> restore(TransactionRecord row) =>
       _db.into(_db.transactions).insert(row);
 
-  /// Newest first, with account/category joined in. [limit] keeps the list
-  /// light; paging can come later if needed.
-  Stream<List<TransactionView>> watchViews({int limit = 500}) {
+  /// Newest first, with account/category joined in, narrowed by [filter].
+  /// [limit] keeps the list light; paging can come later if needed.
+  Stream<List<TransactionView>> watchViews({
+    TransactionFilter filter = noFilter,
+    int limit = 500,
+  }) {
+    final t = _db.transactions;
     final toAccounts = _db.alias(_db.accounts, 'to_acc');
+    final conditions = <Expression<bool>>[
+      if (filter.type != null) t.type.equalsValue(filter.type),
+      // An account matches money leaving it or (transfers) arriving in it.
+      if (filter.accountId != null)
+        t.accountId.equals(filter.accountId!) |
+            t.toAccountId.equals(filter.accountId!),
+      if (filter.categoryId != null) t.categoryId.equals(filter.categoryId!),
+      if (filter.range != null) ...[
+        t.occurredAt.isBiggerOrEqualValue(filter.range!.start),
+        t.occurredAt.isSmallerThanValue(filter.range!.end),
+      ],
+      ?_searchCondition(filter.query, toAccounts),
+    ];
+
     final query =
         _db.select(_db.transactions).join([
             innerJoin(
@@ -98,6 +143,9 @@ class TransactionsRepository {
             OrderingTerm.desc(_db.transactions.createdAt),
           ])
           ..limit(limit);
+    if (conditions.isNotEmpty) {
+      query.where(conditions.reduce((a, b) => a & b));
+    }
     return query.watch().map(
       (rows) => [
         for (final r in rows)
@@ -109,6 +157,30 @@ class TransactionsRepository {
           ),
       ],
     );
+  }
+
+  /// Matches notes, category and account names (case-insensitive), and
+  /// amounts: "250" finds ৳250–৳250.99, "250.5" finds exactly ৳250.50.
+  Expression<bool>? _searchCondition(String raw, $AccountsTable toAccounts) {
+    final q = raw.trim();
+    if (q.isEmpty) return null;
+    final pattern = '%${q.toLowerCase()}%';
+    Expression<bool> like(Expression<String> e) => e.lower().like(pattern);
+
+    var text =
+        like(_db.transactions.note) |
+        like(_db.categories.name) |
+        like(_db.accounts.name) |
+        like(toAccounts.name);
+
+    final amount = Money.tryParse(q);
+    if (amount != null && amount.isPositive) {
+      final a = _db.transactions.amount;
+      text |= q.contains('.')
+          ? a.equals(amount.minor)
+          : a.isBetweenValues(amount.minor, amount.minor + 99);
+    }
+    return text;
   }
 
   /// Active categories of [kind], most used first, then by sort order —
@@ -149,9 +221,30 @@ final transactionsRepositoryProvider = Provider<TransactionsRepository>(
   ),
 );
 
+/// All recent transactions (Home "Recent", first-run checks).
 final transactionViewsProvider = StreamProvider<List<TransactionView>>(
   (ref) => ref.watch(transactionsRepositoryProvider).watchViews(),
 );
+
+/// The Activity tab's current search and filters.
+class ActivityFilterNotifier extends Notifier<TransactionFilter> {
+  @override
+  TransactionFilter build() => noFilter;
+
+  void set(TransactionFilter filter) => state = filter;
+  void clear() => state = noFilter;
+}
+
+final activityFilterProvider =
+    NotifierProvider<ActivityFilterNotifier, TransactionFilter>(
+      ActivityFilterNotifier.new,
+    );
+
+/// Activity's list: everything, or the filtered result.
+final filteredViewsProvider = StreamProvider<List<TransactionView>>((ref) {
+  final filter = ref.watch(activityFilterProvider);
+  return ref.watch(transactionsRepositoryProvider).watchViews(filter: filter);
+});
 
 final categoriesByUsageProvider =
     StreamProvider.family<List<Category>, CategoryKind>(
