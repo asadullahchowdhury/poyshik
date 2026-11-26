@@ -1,0 +1,47 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<Base title={title} noindex>
+  <Header />
+  <main id="main" class="legal">
+    <div class="container">
+      <p class="eyebrow">Draft · not yet published</p>
+      <h1 class="display h2">{title}</h1>
+      <div class="legal__body">
+        <slot />
+      </div>
+    </div>
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .legal {
+    padding: 64px 0 120px;
+  }
+  .legal__body {
+    max-width: 44em;
+    margin-top: 32px;
+    color: var(--ink-muted);
+  }
+  .legal__body :global(h2) {
+    color: var(--ink);
+    font-size: 1.15rem;
+    margin: 32px 0 8px;
+  }
+  .legal__body :global(.note) {
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    background: var(--cream);
+    border: 1px dashed var(--marigold);
+    color: var(--ink);
+  }
+</style>

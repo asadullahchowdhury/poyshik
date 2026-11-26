@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "brand-preview",
+      "runtimeExecutable": "D:\\laragon\\bin\\python\\python-3.10\\python.exe",
+      "runtimeArgs": ["-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "D:\\dev\\projects\\poyshik"],
+      "port": 8765
+    },
+    {
+      "name": "website-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "D:\\dev\\projects\\poyshik\\website", "run", "preview", "--", "--port", "4321", "--host", "127.0.0.1"],
+      "port": 4321
+    }
+  ]
+}

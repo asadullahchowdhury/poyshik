@@ -1,0 +1,250 @@
+---
+// Scroll-scrubbed "dolly" shot: a tall section with a sticky stage. As --p goes
+// 0→1 the camera pushes in on the real Home screen (tilt flattens, scale grows)
+// while the background rings pull back the other way: a dolly-zoom feel.
+// The figures on the cards are read from the demo-data screenshot.
+import Phone from './Phone.astro';
+import homeLight from '../assets/screens/home_light.png';
+
+const cards = [
+  { label: 'Today', value: '550', x: -330, y: -150 },
+  { label: 'This week', value: '4,995', x: 320, y: -190 },
+  { label: 'Safe to spend', value: '1,918', unit: '/day', x: -350, y: 150, forest: true },
+  { label: 'Income this month', value: '69,500', x: 330, y: 170, income: true },
+];
+---
+
+<section class="dolly" data-progress="sticky" data-static="0.82" aria-labelledby="dolly-title">
+  <div class="dolly__stage">
+    <div class="dolly__rings" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="dolly__copy">
+      <p class="eyebrow">The month at a glance</p>
+      <h2 class="display h2" id="dolly-title">
+        One glance.
+        <br />
+        <span class="italic-accent">The whole month.</span>
+      </h2>
+    </div>
+
+    <div class="dolly__phone">
+      <Phone
+        src={homeLight}
+        alt="Poyshik Home: spending this month, budget, safe to spend and accounts."
+        width={330}
+      />
+    </div>
+
+    {cards.map((c, i) => (
+      <div
+        class:list={['stat', { 'stat--forest': c.forest, 'stat--income': c.income }]}
+        style={`--x:${c.x}px; --y:${c.y}px; --i:${i}`}
+        aria-hidden="true"
+      >
+        <span class="stat__label">{c.label}</span>
+        <span class="stat__value tabular">
+          <span class="sym">৳</span>
+          {c.value}
+          {c.unit && <small>{c.unit}</small>}
+        </span>
+      </div>
+    ))}
+
+    <p class="dolly__end">
+      Spending, budget, what’s safe today and every balance, before your tea gets cold.
+    </p>
+  </div>
+</section>
+
+<style>
+  .dolly {
+    --p: 0;
+    position: relative;
+    height: 280vh;
+    background: radial-gradient(120% 70% at 50% 40%, #f8f3e9 0%, var(--paper) 60%);
+  }
+  .dolly__stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    perspective: 1400px;
+  }
+
+  /* Background pulls back while the phone pushes in. */
+  .dolly__rings {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    transform: scale(calc(1.55 - var(--p) * 0.65));
+    opacity: calc(0.35 + var(--p) * 0.65);
+  }
+  .dolly__rings span {
+    grid-area: 1 / 1;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--forest) 14%, transparent);
+  }
+  .dolly__rings span:nth-child(1) {
+    width: 46vmin;
+    height: 46vmin;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--marigold) 10%, transparent),
+      transparent 70%
+    );
+  }
+  .dolly__rings span:nth-child(2) {
+    width: 74vmin;
+    height: 74vmin;
+  }
+  .dolly__rings span:nth-child(3) {
+    width: 104vmin;
+    height: 104vmin;
+  }
+  .dolly__rings span:nth-child(4) {
+    width: 138vmin;
+    height: 138vmin;
+    border-style: dashed;
+  }
+
+  .dolly__copy {
+    position: absolute;
+    top: clamp(72px, 12vh, 128px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    opacity: clamp(0, calc(1 - var(--p) * 2.6), 1);
+    transform: translateY(calc(var(--p) * -80px));
+    z-index: 3;
+  }
+  .dolly__copy .eyebrow {
+    justify-content: center;
+  }
+
+  .dolly__phone {
+    position: relative;
+    z-index: 2;
+    transform-origin: 50% 70%;
+    /* Ends straight-on and slightly high, leaving room for the closing line. */
+    transform: translateY(calc((1 - var(--p)) * 34vh - var(--p) * 5vh))
+      rotateX(calc((1 - var(--p)) * 30deg)) scale(calc(0.8 + var(--p) * 0.2));
+    will-change: transform;
+  }
+  /* Size the phone by viewport height so the final frame always fits. */
+  .dolly__phone :global(.phone) {
+    width: min(330px, 33vh, 78vw);
+  }
+
+  .stat {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 4;
+    display: grid;
+    gap: 2px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    background: var(--cream);
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow-soft);
+    white-space: nowrap;
+    /* Cards start tucked behind the phone and drift out as we push in. */
+    transform: translate(-50%, -50%)
+      translate(
+        calc(var(--x) * (0.25 + var(--p) * 0.85)),
+        calc(var(--y) * (0.25 + var(--p) * 0.85) + (1 - var(--p)) * 20vh)
+      );
+    opacity: min(
+      clamp(0, calc(var(--p) * 5 - 0.45 - var(--i) * 0.18), 1),
+      clamp(0, calc((1.02 - var(--p)) * 5), 1)
+    );
+  }
+  .stat__label {
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+  }
+  .stat__value {
+    font-size: 1.35rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+  .stat__value .sym {
+    font-size: 0.62em;
+    opacity: 0.6;
+    margin-right: 1px;
+  }
+  .stat__value small {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+  }
+  .stat--forest {
+    background: var(--forest);
+    border-color: transparent;
+    color: var(--on-forest);
+  }
+  .stat--forest .stat__label,
+  .stat--forest small {
+    color: var(--on-forest-muted);
+  }
+  .stat--income .stat__value {
+    color: var(--income);
+  }
+
+  .dolly__end {
+    position: absolute;
+    bottom: clamp(20px, 5vh, 56px);
+    left: 50%;
+    width: min(30em, calc(100% - 2 * var(--gutter)));
+    margin: 0;
+    padding: 14px 22px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cream) 88%, transparent);
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(6px);
+    text-align: center;
+    translate: -50% 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 1.9vw, 1.5rem);
+    line-height: 1.2;
+    z-index: 5;
+    opacity: clamp(0, calc((var(--p) - 0.72) * 5), 1);
+    transform: translateY(calc((1 - var(--p)) * 40px));
+  }
+
+  @media (max-width: 760px) {
+    .dolly {
+      height: 220vh;
+    }
+    .stat {
+      padding: 10px 12px;
+      --x-scale: 0.42;
+      transform: translate(-50%, -50%)
+        translate(
+          calc(var(--x) * var(--x-scale) * (0.3 + var(--p) * 0.7)),
+          calc(var(--y) * (0.3 + var(--p) * 0.9) + (1 - var(--p)) * 20vh)
+        );
+    }
+    .stat__value {
+      font-size: 1.05rem;
+    }
+    .dolly__phone {
+      transform: translateY(calc((1 - var(--p)) * 30vh - var(--p) * 6vh))
+        rotateX(calc((1 - var(--p)) * 26deg)) scale(calc(0.78 + var(--p) * 0.2));
+    }
+    .dolly__end {
+      font-size: 1rem;
+      border-radius: 20px;
+    }
+  }
+</style>

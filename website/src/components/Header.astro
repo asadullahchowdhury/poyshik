@@ -1,0 +1,91 @@
+---
+import logo from '../assets/brand/poyshik-logo-light.svg?raw';
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const links = [
+  { href: `${base}#how`, label: 'How it works' },
+  { href: `${base}#features`, label: 'Features' },
+  { href: `${base}#insights`, label: 'Insights' },
+  { href: `${base}#privacy`, label: 'Privacy' },
+];
+---
+
+<header class="header" data-header>
+  <div class="container header__inner">
+    <a class="header__logo" href={base} aria-label="Poyshik home" set:html={logo} />
+    <nav aria-label="Main">
+      <ul>
+        {links.map((l) => (
+          <li>
+            <a href={l.href}>{l.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <a class="btn btn-primary header__cta" href={`${base}#download`}>
+      Get the app
+    </a>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition:
+      background-color 0.3s var(--ease),
+      box-shadow 0.3s var(--ease);
+  }
+  .header:global(.is-scrolled) {
+    background: rgba(244, 238, 226, 0.88);
+    backdrop-filter: saturate(1.2) blur(10px);
+    box-shadow: 0 1px 0 var(--hairline);
+  }
+  .header__inner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 72px;
+  }
+  .header__logo {
+    display: block;
+    height: 30px;
+    flex: none;
+  }
+  .header__logo :global(svg) {
+    height: 100%;
+    width: auto;
+  }
+  nav {
+    margin-left: auto;
+  }
+  ul {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav a {
+    text-decoration: none;
+    font-size: 0.95rem;
+    color: var(--ink-muted);
+    transition: color 0.2s;
+  }
+  nav a:hover {
+    color: var(--ink);
+  }
+  .header__cta {
+    min-height: 42px;
+    padding: 0 18px;
+    font-size: 0.92rem;
+  }
+  @media (max-width: 860px) {
+    nav {
+      display: none;
+    }
+    .header__cta {
+      margin-left: auto;
+    }
+  }
+</style>
