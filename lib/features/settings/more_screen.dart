@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -6,6 +8,7 @@ import '../../app/router.dart';
 import '../../app/theme/theme.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../l10n/app_localizations.dart';
+import '../budgets/budget_sheet.dart';
 
 /// Hub for less frequent destinations: accounts, categories, budget,
 /// backup and settings. Developer tools appear only in debug builds.
@@ -37,7 +40,11 @@ class MoreScreen extends StatelessWidget {
                 label: l10n.moreCategories,
                 onTap: () => context.go(Routes.categories),
               ),
-              _Item(icon: Icons.savings_rounded, label: l10n.moreBudget),
+              _Item(
+                icon: Icons.savings_rounded,
+                label: l10n.moreBudget,
+                onTap: () => unawaited(showBudgetSheet(context)),
+              ),
             ],
           ),
           const SizedBox(height: Space.lg),

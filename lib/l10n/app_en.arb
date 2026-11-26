@@ -88,6 +88,27 @@
   "categoryArchive": "Archive category",
   "categoryUnarchive": "Restore category",
   "categoryArchiveHint": "Archived categories keep their past transactions but disappear from quick entry.",
+  "budgetTitle": "Monthly budget",
+  "budgetHelp": "How much you want to spend each month in total. Poyshik turns it into a daily amount you can safely spend.",
+  "budgetAmount": "Budget per month",
+  "budgetInvalid": "Enter an amount greater than zero",
+  "budgetSave": "Save budget",
+  "budgetRemove": "Remove budget",
+  "budgetSetPrompt": "Set a monthly budget",
+  "budgetOf": "of {amount} budget",
+  "@budgetOf": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "budgetSafeToSpend": "Safe to spend",
+  "budgetPerDay": "/day",
+  "budgetDaysLeft": "{count, plural, =1{Last day} other{{count} days left}}",
+  "@budgetDaysLeft": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "budgetOver": "{amount} over budget",
+  "@budgetOver": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
   "homeSpentThisMonth": "Spent in {month}",
   "@homeSpentThisMonth": {
     "placeholders": { "month": { "type": "String" } }

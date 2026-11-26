@@ -10,6 +10,7 @@ import '../../app/theme/theme.dart';
 import '../../core/dates/clock.dart';
 import '../../core/dates/periods.dart';
 import '../../core/money/money.dart';
+import '../../core/money/money_format.dart';
 import '../../core/widgets/amount_text.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/balance_text.dart';
@@ -18,6 +19,8 @@ import '../../core/widgets/poyshik_card.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
+import '../budgets/budget_repository.dart';
+import '../budgets/budget_sheet.dart';
 import '../transactions/add_transaction_sheet.dart';
 import '../transactions/transaction_tile.dart';
 import '../transactions/transactions_repository.dart';
@@ -131,7 +134,13 @@ class _HeroCard extends ConsumerWidget {
       }
     }
 
+    final budget = ref.watch(overallBudgetProvider).value;
+    final status = budget == null
+        ? null
+        : budgetStatus(budget: budget, spent: spent, now: now);
+
     return PoyshikCard(
+      onTap: () => unawaited(showBudgetSheet(context)),
       padding: const EdgeInsets.all(Space.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,6 +153,24 @@ class _HeroCard extends ConsumerWidget {
           ),
           const SizedBox(height: Space.sm),
           AmountText(spent, size: AmountSize.hero),
+          if (status != null)
+            _BudgetBlock(status: status)
+          else ...[
+            const SizedBox(height: Space.sm),
+            Row(
+              children: [
+                Icon(Icons.add_circle_outline_rounded, size: 16, color: c.ink),
+                const SizedBox(width: Space.xs),
+                Text(
+                  l10n.budgetSetPrompt,
+                  style: AppType.label.copyWith(
+                    color: c.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (compare != null) ...[
             const SizedBox(height: Space.sm),
             Row(
@@ -185,6 +212,98 @@ class _HeroCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Budget progress and the daily "safe to spend" figure.
+class _BudgetBlock extends StatelessWidget {
+  const _BudgetBlock({required this.status});
+
+  final BudgetStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final barColor = status.isOver
+        ? c.warning
+        : status.progress > 0.85
+        ? c.expense
+        : c.accent;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: Space.xs),
+        Text(
+          l10n.budgetOf(MoneyFormat.format(status.budget)),
+          style: AppType.label.copyWith(color: c.inkMuted),
+        ),
+        const SizedBox(height: Space.lg),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(Radii.pill),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: status.progress.clamp(0, 1)),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutCubic,
+            builder: (context, v, _) => LinearProgressIndicator(
+              value: v,
+              minHeight: 8,
+              backgroundColor: c.surfaceRaised,
+              color: barColor,
+            ),
+          ),
+        ),
+        const SizedBox(height: Space.lg),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: status.isOver
+                  ? Text(
+                      l10n.budgetOver(MoneyFormat.format(-status.remaining)),
+                      style: AppType.bodyStrong.copyWith(color: c.warning),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.budgetSafeToSpend,
+                          style: AppType.label.copyWith(color: c.inkMuted),
+                        ),
+                        const SizedBox(height: Space.xxs),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            AmountText(status.perDay),
+                            Text(
+                              l10n.budgetPerDay,
+                              style: AppType.label.copyWith(color: c.inkMuted),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Space.md,
+                vertical: Space.xs + 2,
+              ),
+              decoration: BoxDecoration(
+                color: c.surfaceRaised,
+                borderRadius: BorderRadius.circular(Radii.pill),
+              ),
+              child: Text(
+                l10n.budgetDaysLeft(status.daysLeft),
+                style: AppType.caption.copyWith(color: c.ink),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

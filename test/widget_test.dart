@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:poyshik/app/app.dart';
 import 'package:poyshik/core/money/money.dart';
 import 'package:poyshik/features/accounts/accounts_repository.dart';
+import 'package:poyshik/features/budgets/budget_repository.dart';
 import 'package:poyshik/features/home/summary_repository.dart';
 import 'package:poyshik/features/transactions/transactions_repository.dart';
 
@@ -16,6 +17,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
         periodTotalProvider.overrideWith(
           (ref, query) => Stream.value(Money.zero),
         ),
+        overallBudgetProvider.overrideWith((ref) => Stream.value(null)),
         topCategoriesProvider.overrideWith(
           (ref, range) => Stream.value(const []),
         ),
