@@ -52,6 +52,33 @@ void main() {
     expect(daily[5].$2, const Money(30));
   });
 
+  group('barScale', () {
+    test('normal days scale to the max with headroom', () {
+      final s = barScale([
+        const Money(100),
+        const Money(200),
+        const Money(150),
+      ]);
+      expect(s.cap, 200);
+      expect(s.maxY, closeTo(230, 1e-9));
+    });
+
+    test('one outlier (>3× next) is capped so other days stay readable', () {
+      final s = barScale([
+        const Money.taka(18000), // rent
+        const Money.taka(900),
+        const Money.taka(400),
+      ]);
+      expect(s.cap, closeTo(90000 * 1.6, 1e-6));
+      expect(s.maxY, greaterThan(s.cap));
+    });
+
+    test('empty or all-zero', () {
+      expect(barScale(const []).maxY, 1);
+      expect(barScale([Money.zero]).maxY, 1);
+    });
+  });
+
   group('buildInsights', () {
     final month = monthRange(now);
 

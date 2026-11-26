@@ -9,6 +9,7 @@ import '../../core/dates/clock.dart';
 import '../../core/dates/periods.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/category_icon.dart';
+import '../../core/widgets/pill_chip.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
@@ -290,6 +291,7 @@ class _ActivityFilterBarState extends ConsumerState<ActivityFilterBar> {
   }
 }
 
+/// A filter: a [PillChip] with a dropdown hint, spaced for the chip row.
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
@@ -303,27 +305,14 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
-    final fg = active ? c.onInk : c.ink;
     return Padding(
       padding: const EdgeInsets.only(right: Space.sm),
-      child: Material(
-        color: active ? c.ink : c.surfaceRaised,
-        borderRadius: BorderRadius.circular(Radii.pill),
-        child: InkWell(
+      child: Center(
+        child: PillChip(
+          label: label,
+          selected: active,
           onTap: onTap,
-          borderRadius: BorderRadius.circular(Radii.pill),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.md + 2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label, style: AppType.label.copyWith(color: fg)),
-                const SizedBox(width: Space.xs),
-                Icon(Icons.expand_more_rounded, size: 18, color: fg),
-              ],
-            ),
-          ),
+          trailingIcon: Icons.expand_more_rounded,
         ),
       ),
     );

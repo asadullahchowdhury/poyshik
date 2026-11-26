@@ -1,4 +1,4 @@
-import 'package:material_ui/material_ui.dart';
+﻿import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
 
@@ -31,7 +31,7 @@ class PalettePicker extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selected == i ? c.ink : Colors.transparent,
+                  color: selected == i ? c.brand : Colors.transparent,
                   width: 2,
                 ),
               ),

@@ -73,6 +73,18 @@ flutter:
   # Geist (SIL OFL 1.1, see assets/fonts/geist/OFL.txt). Bundled so the app
   # never fetches fonts at runtime.
   fonts:
+    # Only the taka sign (৳), from Noto Sans Bengali (SIL OFL 1.1); used as a
+    # fallback because Geist/Instrument Serif lack it. Built by
+    # brand/tools/make-taka-font.mjs.
+    - family: PoyshikTaka
+      fonts:
+        - asset: assets/fonts/taka/PoyshikTaka.ttf
+    # Instrument Serif (SIL OFL 1.1): display voice for titles.
+    - family: InstrumentSerif
+      fonts:
+        - asset: assets/fonts/instrument_serif/InstrumentSerif-Regular.ttf
+        - asset: assets/fonts/instrument_serif/InstrumentSerif-Italic.ttf
+          style: italic
     - family: Geist
       fonts:
         - asset: assets/fonts/geist/Geist-Regular.ttf

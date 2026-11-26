@@ -17,8 +17,8 @@ abstract final class AppTheme {
   static ThemeData _build(Brightness brightness, PoyshikColors c) {
     final scheme = ColorScheme(
       brightness: brightness,
-      primary: c.ink,
-      onPrimary: c.onInk,
+      primary: c.brand,
+      onPrimary: c.onBrand,
       secondary: c.accent,
       onSecondary: c.onAccent,
       error: c.expense,
@@ -40,6 +40,7 @@ abstract final class AppTheme {
       brightness: brightness,
       colorScheme: scheme,
       fontFamily: AppType.fontFamily,
+      fontFamilyFallback: AppType.fallback,
       textTheme: AppType.textTheme(c.ink, c.inkMuted),
       scaffoldBackgroundColor: c.background,
       canvasColor: c.background,
@@ -53,14 +54,76 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
-        titleTextStyle: AppType.titleLarge.copyWith(color: c.ink),
+        titleTextStyle: AppType.displayMedium.copyWith(color: c.ink),
+        toolbarHeight: 64,
+        titleSpacing: Space.screen,
         systemOverlayStyle: _overlay(brightness, c),
       ),
+      // Shared-axis style "fade forwards" on Android: calm, quick, modern.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+        },
+      ),
       dividerTheme: DividerThemeData(color: c.hairline, thickness: 1, space: 1),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          visualDensity: VisualDensity.standard,
+          minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
+          textStyle: const WidgetStatePropertyAll(AppType.label),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.md),
+            ),
+          ),
+          side: WidgetStatePropertyAll(BorderSide(color: c.hairline)),
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? c.brand : c.surface,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? c.onBrand : c.inkMuted,
+          ),
+          iconColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? c.onBrand : c.inkMuted,
+          ),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? c.onBrand : c.inkSubtle,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? c.brand : c.surfaceRaised,
+        ),
+        trackOutlineColor: WidgetStatePropertyAll(c.hairline),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: c.brand,
+        linearTrackColor: c.surfaceRaised,
+        circularTrackColor: c.surfaceRaised,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: c.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.xl),
+        ),
+        titleTextStyle: AppType.titleLarge.copyWith(color: c.ink),
+        contentTextStyle: AppType.body.copyWith(color: c.inkMuted),
+      ),
+      listTileTheme: ListTileThemeData(
+        iconColor: c.ink,
+        textColor: c.ink,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+        ),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: c.ink,
-          foregroundColor: c.onInk,
+          backgroundColor: c.brand,
+          foregroundColor: c.onBrand,
+          disabledBackgroundColor: c.surfaceRaised,
+          disabledForegroundColor: c.inkSubtle,
           minimumSize: const Size.fromHeight(52),
           textStyle: AppType.button,
           shape: buttonShape,
@@ -101,7 +164,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.md),
-          borderSide: BorderSide(color: c.ink, width: 1.5),
+          borderSide: BorderSide(color: c.brand, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.md),
@@ -121,14 +184,18 @@ abstract final class AppTheme {
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
-        dragHandleColor: c.hairline,
+        dragHandleColor: c.inkSubtle.withValues(alpha: 0.4),
+        dragHandleSize: const Size(36, 4),
+        modalBarrierColor: c.brand.withValues(
+          alpha: brightness == Brightness.light ? 0.28 : 0.5,
+        ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: c.ink,
-        contentTextStyle: AppType.bodyStrong.copyWith(color: c.onInk),
+        backgroundColor: c.hero,
+        contentTextStyle: AppType.bodyStrong.copyWith(color: c.onHero),
         actionTextColor: c.accent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(

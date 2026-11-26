@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Poyshik mark: a budget ring, three-quarters full, with a coin in the gap.
-     108dp adaptive-icon canvas; the mark stays inside the 66dp safe zone. -->
+<!-- Poyshik mark: a P whose stem ends in a marigold leaf.
+     Same geometry as brand/tools/build-brand.mjs (512 grid), scaled to sit
+     inside the adaptive-icon safe zone of the 108dp canvas:
+     s = 0.1505, mark centre (263, 286) moved to (54, 54). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:pathData="M54,36 A18,18 0 1,1 36,54"
-        android:strokeColor="@color/icon_mark"
-        android:strokeWidth="8"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000" />
-    <path
-        android:pathData="M36.77,41.27 a4.5,4.5 0 1,0 9,0 a4.5,4.5 0 1,0 -9,0"
-        android:fillColor="@color/icon_mark" />
+    <group
+        android:scaleX="0.1505"
+        android:scaleY="0.1505"
+        android:translateX="14.42"
+        android:translateY="10.96">
+        <path
+            android:fillType="evenOdd"
+            android:fillColor="@color/icon_p"
+            android:pathData="M168,140A36,36 0,0 1,204 104H276A100,100 0,0 1,276 304H248V320H168Z M248,160H274A44,44 0,0 1,274 248H248Z" />
+        <path
+            android:fillColor="@color/icon_leaf"
+            android:pathData="M248,334C250,394 220,440 150,468C158,430 168,392 168,334Z" />
+    </group>
 </vector>

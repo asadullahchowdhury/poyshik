@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +14,10 @@ import '../../core/widgets/amount_text.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/balance_text.dart';
 import '../../core/widgets/category_icon.dart';
+import '../../core/widgets/feedback.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/numpad.dart';
+import '../../core/widgets/pill_chip.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
@@ -205,21 +208,21 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
       };
     }
     unawaited(HapticFeedback.mediumImpact());
-    if (mounted) Navigator.of(context).pop();
-
+    if (!mounted) return;
+    final snack = successSnackBar(
+      context,
+      '$message · ${MoneyFormat.format(draft.amount)}',
+      action: newId == null
+          ? null
+          : SnackBarAction(
+              label: l10n.txUndo,
+              onPressed: () => unawaited(repo.delete(newId!)),
+            ),
+    );
+    Navigator.of(context).pop();
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('$message · ${MoneyFormat.format(draft.amount)}'),
-          action: newId == null
-              ? null
-              : SnackBarAction(
-                  label: l10n.txUndo,
-                  onPressed: () => unawaited(repo.delete(newId!)),
-                ),
-        ),
-      );
+      ..showSnackBar(snack);
   }
 
   @override
@@ -263,15 +266,25 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
               labels: (l10n.txExpense, l10n.txIncome, l10n.txTransfer),
             ),
             const SizedBox(height: Space.xl),
-            AmountText(
-              _input.value,
-              size: AmountSize.hero,
-              tone: switch (_type) {
-                TransactionType.expense => AmountTone.neutral,
-                TransactionType.income => AmountTone.income,
-                TransactionType.transfer => AmountTone.transfer,
-              },
-              color: _input.isEmpty ? c.inkSubtle : null,
+            // Each key press gives the amount a tiny settle, like a ledger
+            // figure being written; skipped when motion is reduced.
+            TweenAnimationBuilder<double>(
+              key: ValueKey(_input.text),
+              tween: Tween(begin: Motion.reduced(context) ? 1 : 1.035, end: 1),
+              duration: Motion.fast,
+              curve: Motion.curve,
+              builder: (context, s, child) =>
+                  Transform.scale(scale: s, child: child),
+              child: AmountText(
+                _input.value,
+                size: AmountSize.hero,
+                tone: switch (_type) {
+                  TransactionType.expense => AmountTone.neutral,
+                  TransactionType.income => AmountTone.income,
+                  TransactionType.transfer => AmountTone.transfer,
+                },
+                color: _input.isEmpty ? c.inkSubtle : null,
+              ),
             ),
             const SizedBox(height: Space.xl),
             if (_isTransfer)
@@ -299,7 +312,7 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
               child: Row(
                 children: [
                   if (!_isTransfer) ...[
-                    _InfoChip(
+                    PillChip(
                       icon: account == null
                           ? Icons.account_balance_wallet_outlined
                           : AppIcons.of(account.icon),
@@ -308,16 +321,16 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
                     ),
                     const SizedBox(width: Space.sm),
                   ],
-                  _InfoChip(
+                  PillChip(
                     icon: Icons.calendar_today_rounded,
                     label: _dateLabel(l10n),
                     onTap: () => unawaited(_pickDate()),
                   ),
                   const SizedBox(width: Space.sm),
-                  _InfoChip(
+                  PillChip(
                     icon: Icons.notes_rounded,
                     label: l10n.txAddNote,
-                    active: _showNote,
+                    selected: _showNote,
                     onTap: () => setState(() => _showNote = !_showNote),
                   ),
                 ],
@@ -548,7 +561,7 @@ class _CategoryStrip extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(Radii.md + 2),
                     border: Border.all(
-                      color: selected ? c.ink : Colors.transparent,
+                      color: selected ? c.brand : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -572,50 +585,6 @@ class _CategoryStrip extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.active = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Material(
-      color: active ? c.ink : c.surfaceRaised,
-      borderRadius: BorderRadius.circular(Radii.pill),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.pill),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Space.md + 2,
-            vertical: Space.sm + 1,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: active ? c.onInk : c.ink),
-              const SizedBox(width: Space.xs + 2),
-              Text(
-                label,
-                style: AppType.label.copyWith(color: active ? c.onInk : c.ink),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -645,7 +614,7 @@ class _AccountPicker extends ConsumerWidget {
             ),
             child: Text(
               title,
-              style: AppType.titleMedium.copyWith(color: c.ink),
+              style: AppType.titleLarge.copyWith(color: c.ink),
             ),
           ),
           for (final item in accounts)
@@ -678,7 +647,7 @@ class _AccountPicker extends ConsumerWidget {
                           ? Icons.radio_button_checked_rounded
                           : Icons.radio_button_unchecked_rounded,
                       color: item.account.id == selectedId
-                          ? c.ink
+                          ? c.brand
                           : c.inkSubtle,
                       size: 22,
                     ),

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -160,7 +160,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(Radii.md),
                           border: Border.all(
-                            color: _icon == key ? c.ink : Colors.transparent,
+                            color: _icon == key ? c.brand : Colors.transparent,
                             width: 2,
                           ),
                         ),

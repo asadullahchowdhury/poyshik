@@ -63,6 +63,23 @@ List<(DateTime, Money)> dailyTotals(
   ];
 }
 
+/// Y-axis scale for the daily bars. One huge day (rent, a phone) would
+/// flatten every other bar, so when the largest day is over 3× the next,
+/// the axis is capped and that bar is drawn clipped (its tooltip still
+/// shows the real amount).
+({double maxY, double cap}) barScale(List<Money> values) {
+  final sorted = [for (final v in values) v.minor.toDouble()]
+    ..sort((a, b) => b.compareTo(a));
+  if (sorted.isEmpty || sorted.first <= 0) return (maxY: 1, cap: 1);
+  final top = sorted.first;
+  final second = sorted.length > 1 ? sorted[1] : 0.0;
+  if (second > 0 && top > second * 3) {
+    final cap = second * 1.6;
+    return (maxY: cap * 1.08, cap: cap);
+  }
+  return (maxY: top * 1.15, cap: top);
+}
+
 /// A plain-language observation. The UI turns each into a sentence.
 sealed class Insight {
   const Insight();

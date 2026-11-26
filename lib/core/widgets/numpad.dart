@@ -95,7 +95,13 @@ class _NumpadKey extends StatelessWidget {
           height: 58,
           child: Center(
             child: DefaultTextStyle(
-              style: AppType.amountMedium.copyWith(fontSize: 24, color: c.ink),
+              // Proportional figures read better on keys than tabular ones.
+              style: AppType.amountMedium.copyWith(
+                fontSize: 24,
+                color: c.ink,
+                fontWeight: FontWeight.w500,
+                fontFeatures: const [],
+              ),
               child: IconTheme(
                 data: IconThemeData(color: c.ink),
                 child: child,
