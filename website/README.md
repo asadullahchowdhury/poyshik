@@ -37,6 +37,7 @@ Copy `.env.example` to `.env` (or set the same variables in your host's dashboar
 | `BASE_PATH`             | GitHub Pages project sites only: `/<repo-name>`. Leave empty elsewhere.            |
 | `PUBLIC_PLAY_STORE_URL` | Google Play listing. When empty, the page says _Coming soon to Android_.           |
 | `PUBLIC_APK_URL`        | A direct APK download (e.g. a GitHub Release asset), if offered.                   |
+| `PUBLIC_APK_VERSION`    | Version label shown under a direct APK download, e.g. `1.1.0`.                     |
 | `PUBLIC_CONTACT_EMAIL`  | Adds a Contact link to the footer.                                                 |
 
 Download buttons only ever link to a URL you configure — nothing is invented.
@@ -56,9 +57,23 @@ cd website && npm run sync-assets
 
 ## Deploy to Vercel
 
-1. Import the repository in Vercel.
-2. **Root Directory:** `website`. Vercel detects Astro; build command `npm run build`, output `dist`.
-3. Add environment variables (at least `SITE_URL`). Deploy.
+Live at **https://poyshik.vercel.app** (Vercel project `poyshik`).
+
+The project is connected to this GitHub repository, so deploys are automatic:
+
+- **Push to `main`** → production deploy to poyshik.vercel.app.
+- **Push any other branch / open a PR** → a preview deploy with its own URL.
+- Commits that don't touch `website/` are skipped (Ignored Build Step:
+  `git diff --quiet HEAD^ HEAD ./`), so app-only changes don't rebuild the site.
+
+Project settings: Root Directory `website`, framework Astro (build `npm run build`,
+output `dist`), production branch `main`. Production environment variables:
+`SITE_URL`, `PUBLIC_APK_URL`, `PUBLIC_APK_VERSION` (change them in the Vercel
+dashboard, then redeploy).
+
+**Shipping a new app version:** build the signed APK, publish a GitHub Release with
+the file named `poyshik.apk` (the site links to `releases/latest/download/poyshik.apk`,
+so the link never changes), then update `PUBLIC_APK_VERSION` and redeploy.
 
 ## Deploy to GitHub Pages
 
