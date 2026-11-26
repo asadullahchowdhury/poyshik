@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poyshik/app/app.dart';
+import 'package:poyshik/core/money/money.dart';
+import 'package:poyshik/features/accounts/accounts_repository.dart';
+import 'package:poyshik/features/home/summary_repository.dart';
 import 'package:poyshik/features/transactions/transactions_repository.dart';
 
 Future<void> _pumpApp(WidgetTester tester) async {
@@ -9,6 +12,13 @@ Future<void> _pumpApp(WidgetTester tester) async {
       // Widget tests avoid the real database; data logic is tested in test/data.
       overrides: [
         transactionViewsProvider.overrideWith((ref) => Stream.value(const [])),
+        activeAccountsProvider.overrideWith((ref) => Stream.value(const [])),
+        periodTotalProvider.overrideWith(
+          (ref, query) => Stream.value(Money.zero),
+        ),
+        topCategoriesProvider.overrideWith(
+          (ref, range) => Stream.value(const []),
+        ),
       ],
       child: const PoyshikApp(),
     ),
@@ -17,10 +27,12 @@ Future<void> _pumpApp(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('starts on Home with four tabs', (tester) async {
+  testWidgets('starts on Home with four tabs and a first-run prompt', (
+    tester,
+  ) async {
     await _pumpApp(tester);
 
-    expect(find.text('Your month at a glance'), findsOneWidget);
+    expect(find.text('Log your first expense'), findsOneWidget);
     for (final tab in ['Home', 'Activity', 'Insights', 'More']) {
       expect(find.text(tab), findsWidgets);
     }

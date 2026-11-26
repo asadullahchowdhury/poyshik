@@ -17,9 +17,6 @@
   "@addTransaction": {
     "description": "Accessibility label and sheet title for the central + button."
   },
-
-  "homeEmptyTitle": "Your month at a glance",
-  "homeEmptyMessage": "Spending, budget and balances will live here.",
   "activityEmptyTitle": "No transactions yet",
   "activityEmptyMessage": "Everything you log will show up here, grouped by day.",
   "insightsEmptyTitle": "Insights need a little data",
@@ -78,6 +75,29 @@
   "txNoAccounts": "Add an account first",
   "txPickCategory": "Pick a category",
   "txDeleted": "Transaction deleted",
+  "homeSpentThisMonth": "Spent in {month}",
+  "@homeSpentThisMonth": {
+    "placeholders": { "month": { "type": "String" } }
+  },
+  "homeMoreThanLastMonth": "{percent}% more than last month by today",
+  "@homeMoreThanLastMonth": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "homeLessThanLastMonth": "{percent}% less than last month by today",
+  "@homeLessThanLastMonth": {
+    "placeholders": { "percent": { "type": "int" } }
+  },
+  "homeSameAsLastMonth": "Same pace as last month",
+  "homeIncome": "Income",
+  "homeNet": "Net",
+  "homeToday": "Today",
+  "homeThisWeek": "This week",
+  "homeAccounts": "Accounts",
+  "homeTopCategories": "Where it went",
+  "homeRecent": "Recent",
+  "homeSeeAll": "See all",
+  "homeFirstTitle": "Log your first expense",
+  "homeFirstMessage": "Tap + below. Amount, category, done — about three seconds.",
   "txFrom": "From",
   "txTo": "To",
   "txSavedTransfer": "Transfer saved",
