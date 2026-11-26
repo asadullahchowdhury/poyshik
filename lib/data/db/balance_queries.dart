@@ -7,9 +7,10 @@ import 'app_database.dart';
 /// the transactions that produce them:
 ///   opening + income − expense − transfers out + transfers in
 extension BalanceQueries on AppDatabase {
-  static const _sql = '''
-    SELECT a.id AS id,
-      a.opening_balance
+  /// SQL for the balance of the account aliased `a`. Reused by queries that
+  /// select accounts together with their balances.
+  static const balanceExpression = '''
+    (a.opening_balance
       + COALESCE((
           SELECT SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE -t.amount END)
           FROM transactions t WHERE t.account_id = a.id
@@ -17,13 +18,11 @@ extension BalanceQueries on AppDatabase {
       + COALESCE((
           SELECT SUM(t.amount) FROM transactions t
           WHERE t.type = 'transfer' AND t.to_account_id = a.id
-        ), 0) AS balance
-    FROM accounts a
-  ''';
+        ), 0))''';
 
   Selectable<(String, Money)> _balances() {
     return customSelect(
-      _sql,
+      'SELECT a.id AS id, $balanceExpression AS balance FROM accounts a',
       readsFrom: {accounts, transactions},
     ).map((row) => (row.read<String>('id'), Money(row.read<int>('balance'))));
   }

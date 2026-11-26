@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/accounts/accounts_screen.dart';
 import '../features/dev/component_gallery_screen.dart';
 import '../features/dev/database_debug_screen.dart';
 import '../features/home/home_screen.dart';
@@ -15,6 +16,7 @@ abstract final class Routes {
   static const activity = '/activity';
   static const insights = '/insights';
   static const more = '/more';
+  static const accounts = '/more/accounts';
   static const gallery = '/more/gallery';
   static const database = '/more/database';
 }
@@ -56,6 +58,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: Routes.more,
                 builder: (context, state) => const MoreScreen(),
                 routes: [
+                  GoRoute(
+                    path: 'accounts',
+                    builder: (context, state) => const AccountsScreen(),
+                  ),
                   GoRoute(
                     path: 'gallery',
                     builder: (context, state) => const ComponentGalleryScreen(),

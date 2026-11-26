@@ -30,6 +30,7 @@ class MoreScreen extends StatelessWidget {
               _Item(
                 icon: Icons.account_balance_wallet_rounded,
                 label: l10n.moreAccounts,
+                onTap: () => context.go(Routes.accounts),
               ),
               _Item(icon: Icons.category_rounded, label: l10n.moreCategories),
               _Item(icon: Icons.savings_rounded, label: l10n.moreBudget),

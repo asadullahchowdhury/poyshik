@@ -83,6 +83,40 @@ abstract final class AppTheme {
           shape: buttonShape,
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: c.surfaceRaised,
+        hintStyle: AppType.body.copyWith(color: c.inkSubtle),
+        labelStyle: AppType.label.copyWith(color: c.inkMuted),
+        helperStyle: AppType.caption.copyWith(color: c.inkMuted),
+        helperMaxLines: 2,
+        errorStyle: AppType.caption.copyWith(color: c.expense),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: Space.lg,
+          vertical: Space.md + 2,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: c.ink, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: c.expense),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: c.expense, width: 1.5),
+        ),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: c.ink,
+        selectionColor: c.accent.withValues(alpha: 0.35),
+        selectionHandleColor: c.accent,
+      ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
