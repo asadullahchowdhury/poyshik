@@ -24,7 +24,8 @@ import 'transactions_repository.dart';
 /// Opens quick entry over whatever tab is showing. Pass [existing] to edit.
 ///
 /// The 3-second flow: type the amount → tap a category → Save. Account
-/// defaults to the last one used, date to now.
+/// defaults to the last one used, date to now. Transfers pick From and To
+/// accounts instead of a category and never count as spending.
 Future<void> showAddTransactionSheet(
   BuildContext context, {
   TransactionRecord? existing,
@@ -51,6 +52,7 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
   late AmountInput _input;
   String? _categoryId;
   String? _accountId;
+  String? _toAccountId;
   late DateTime _occurredAt;
   late final TextEditingController _note;
   late bool _showNote;
@@ -58,6 +60,7 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
 
   bool get _isEdit => widget.existing != null;
   bool get _isIncome => _type == TransactionType.income;
+  bool get _isTransfer => _type == TransactionType.transfer;
 
   @override
   void initState() {
@@ -74,6 +77,7 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
           );
     _categoryId = e?.categoryId;
     _accountId = e?.accountId;
+    _toAccountId = e?.toAccountId;
     _occurredAt = e?.occurredAt ?? DateTime.now();
     _note = TextEditingController(text: e?.note ?? '');
     _showNote = (e?.note ?? '').isNotEmpty;
@@ -93,11 +97,13 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
     super.dispose();
   }
 
+  bool get _transferReady => _toAccountId != null && _toAccountId != _accountId;
+
   bool get _canSave =>
       !_saving &&
       _input.value.isPositive &&
-      _categoryId != null &&
-      _accountId != null;
+      _accountId != null &&
+      (_isTransfer ? _transferReady : _categoryId != null);
 
   void _setType(TransactionType t) {
     if (t == _type) return;
@@ -105,6 +111,22 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
     setState(() {
       _type = t;
       _categoryId = null; // categories differ per kind
+      if (t == TransactionType.transfer && !_transferReady) {
+        final accounts = ref.read(activeAccountsProvider).value ?? [];
+        _toAccountId = accounts
+            .map((a) => a.account.id)
+            .where((id) => id != _accountId)
+            .firstOrNull;
+      }
+    });
+  }
+
+  void _swapAccounts() {
+    unawaited(HapticFeedback.selectionClick());
+    setState(() {
+      final from = _accountId;
+      _accountId = _toAccountId;
+      _toAccountId = from;
     });
   }
 
@@ -131,16 +153,26 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
     });
   }
 
-  Future<void> _pickAccount() async {
+  Future<void> _pickAccount({bool target = false}) async {
     final l10n = AppLocalizations.of(context);
+    final title = _isTransfer
+        ? (target ? l10n.txTo : l10n.txFrom)
+        : (_isIncome ? l10n.txChooseAccountIncome : l10n.txChooseAccount);
     final id = await showModalBottomSheet<String>(
       context: context,
       builder: (_) => _AccountPicker(
-        title: _isIncome ? l10n.txChooseAccountIncome : l10n.txChooseAccount,
-        selectedId: _accountId,
+        title: title,
+        selectedId: target ? _toAccountId : _accountId,
       ),
     );
-    if (id != null) setState(() => _accountId = id);
+    if (id == null) return;
+    setState(() {
+      if (target) {
+        _toAccountId = id;
+      } else {
+        _accountId = id;
+      }
+    });
   }
 
   Future<void> _save() async {
@@ -153,8 +185,8 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
       type: _type,
       amount: _input.value,
       accountId: _accountId!,
-      categoryId: _categoryId,
-      toAccountId: null,
+      categoryId: _isTransfer ? null : _categoryId,
+      toAccountId: _isTransfer ? _toAccountId : null,
       occurredAt: _occurredAt,
       note: _note.text,
     );
@@ -166,7 +198,11 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
       message = l10n.txUpdated;
     } else {
       newId = await repo.add(draft);
-      message = _isIncome ? l10n.txSavedIncome : l10n.txSavedExpense;
+      message = switch (_type) {
+        TransactionType.expense => l10n.txSavedExpense,
+        TransactionType.income => l10n.txSavedIncome,
+        TransactionType.transfer => l10n.txSavedTransfer,
+      };
     }
     unawaited(HapticFeedback.mediumImpact());
     if (mounted) Navigator.of(context).pop();
@@ -193,10 +229,21 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
     final kind = _isIncome ? CategoryKind.income : CategoryKind.expense;
     final categories = ref.watch(categoriesByUsageProvider(kind)).value ?? [];
     final accounts = ref.watch(activeAccountsProvider).value ?? [];
-    final account = accounts
-        .where((a) => a.account.id == _accountId)
-        .firstOrNull
-        ?.account;
+    Account? find(String? id) =>
+        accounts.where((a) => a.account.id == id).firstOrNull?.account;
+    final account = find(_accountId);
+    final toAccount = find(_toAccountId);
+
+    final String buttonLabel;
+    if (_isTransfer && accounts.length < 2) {
+      buttonLabel = l10n.txTransferNeedsTwo;
+    } else if (_isTransfer && _toAccountId == _accountId) {
+      buttonLabel = l10n.txTransferSame;
+    } else if (!_isTransfer && _categoryId == null && _input.value.isPositive) {
+      buttonLabel = l10n.txPickCategory;
+    } else {
+      buttonLabel = l10n.txSave;
+    }
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -213,38 +260,54 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
             _TypeToggle(
               type: _type,
               onChanged: _setType,
-              expenseLabel: l10n.txExpense,
-              incomeLabel: l10n.txIncome,
+              labels: (l10n.txExpense, l10n.txIncome, l10n.txTransfer),
             ),
             const SizedBox(height: Space.xl),
             AmountText(
               _input.value,
               size: AmountSize.hero,
-              tone: _isIncome ? AmountTone.income : AmountTone.neutral,
+              tone: switch (_type) {
+                TransactionType.expense => AmountTone.neutral,
+                TransactionType.income => AmountTone.income,
+                TransactionType.transfer => AmountTone.transfer,
+              },
               color: _input.isEmpty ? c.inkSubtle : null,
             ),
             const SizedBox(height: Space.xl),
-            _CategoryStrip(
-              categories: categories,
-              selectedId: _categoryId,
-              onSelected: (id) {
-                unawaited(HapticFeedback.selectionClick());
-                setState(() => _categoryId = id);
-              },
-            ),
+            if (_isTransfer)
+              _TransferAccounts(
+                from: account,
+                to: toAccount,
+                fromLabel: l10n.txFrom,
+                toLabel: l10n.txTo,
+                onFrom: () => unawaited(_pickAccount()),
+                onTo: () => unawaited(_pickAccount(target: true)),
+                onSwap: _swapAccounts,
+              )
+            else
+              _CategoryStrip(
+                categories: categories,
+                selectedId: _categoryId,
+                onSelected: (id) {
+                  unawaited(HapticFeedback.selectionClick());
+                  setState(() => _categoryId = id);
+                },
+              ),
             const SizedBox(height: Space.lg),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _InfoChip(
-                    icon: account == null
-                        ? Icons.account_balance_wallet_outlined
-                        : AppIcons.of(account.icon),
-                    label: account?.name ?? l10n.txNoAccounts,
-                    onTap: () => unawaited(_pickAccount()),
-                  ),
-                  const SizedBox(width: Space.sm),
+                  if (!_isTransfer) ...[
+                    _InfoChip(
+                      icon: account == null
+                          ? Icons.account_balance_wallet_outlined
+                          : AppIcons.of(account.icon),
+                      label: account?.name ?? l10n.txNoAccounts,
+                      onTap: () => unawaited(_pickAccount()),
+                    ),
+                    const SizedBox(width: Space.sm),
+                  ],
                   _InfoChip(
                     icon: Icons.calendar_today_rounded,
                     label: _dateLabel(l10n),
@@ -282,9 +345,7 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
             ),
             const SizedBox(height: Space.xs),
             PrimaryButton(
-              label: _categoryId == null && _input.value.isPositive
-                  ? l10n.txPickCategory
-                  : l10n.txSave,
+              label: buttonLabel,
               icon: Icons.check_rounded,
               tone: ButtonTone.accent,
               onPressed: _canSave ? () => unawaited(_save()) : null,
@@ -307,14 +368,14 @@ class _TypeToggle extends StatelessWidget {
   const _TypeToggle({
     required this.type,
     required this.onChanged,
-    required this.expenseLabel,
-    required this.incomeLabel,
+    required this.labels,
   });
 
   final TransactionType type;
   final ValueChanged<TransactionType> onChanged;
-  final String expenseLabel;
-  final String incomeLabel;
+
+  /// (expense, income, transfer)
+  final (String, String, String) labels;
 
   @override
   Widget build(BuildContext context) {
@@ -354,9 +415,96 @@ class _TypeToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          seg(TransactionType.expense, expenseLabel),
-          seg(TransactionType.income, incomeLabel),
+          seg(TransactionType.expense, labels.$1),
+          seg(TransactionType.income, labels.$2),
+          seg(TransactionType.transfer, labels.$3),
         ],
+      ),
+    );
+  }
+}
+
+/// From → To account cards with a swap button, shown in place of the
+/// category strip for transfers.
+class _TransferAccounts extends StatelessWidget {
+  const _TransferAccounts({
+    required this.from,
+    required this.to,
+    required this.fromLabel,
+    required this.toLabel,
+    required this.onFrom,
+    required this.onTo,
+    required this.onSwap,
+  });
+
+  final Account? from;
+  final Account? to;
+  final String fromLabel;
+  final String toLabel;
+  final VoidCallback onFrom;
+  final VoidCallback onTo;
+  final VoidCallback onSwap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    Widget card(String label, Account? a, VoidCallback onTap) => Expanded(
+      child: Material(
+        color: c.surfaceRaised,
+        borderRadius: BorderRadius.circular(Radii.lg),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.lg),
+          child: Padding(
+            padding: const EdgeInsets.all(Space.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppType.caption.copyWith(color: c.inkMuted)),
+                const SizedBox(height: Space.sm),
+                Row(
+                  children: [
+                    CategoryIcon(
+                      icon: AppIcons.of(a?.icon ?? 'wallet'),
+                      color: a == null
+                          ? c.inkSubtle
+                          : PoyshikColors.categoryPalette[a.colorIndex],
+                      size: 36,
+                    ),
+                    const SizedBox(width: Space.sm),
+                    Expanded(
+                      child: Text(
+                        a?.name ?? '—',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppType.bodyStrong.copyWith(color: c.ink),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return SizedBox(
+      height: 172,
+      child: Center(
+        child: Row(
+          children: [
+            card(fromLabel, from, onFrom),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+              child: IconButton(
+                onPressed: onSwap,
+                icon: Icon(Icons.swap_horiz_rounded, color: c.transfer),
+              ),
+            ),
+            card(toLabel, to, onTo),
+          ],
+        ),
       ),
     );
   }

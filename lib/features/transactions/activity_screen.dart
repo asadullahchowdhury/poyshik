@@ -10,7 +10,6 @@ import '../../core/dates/periods.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/empty_state.dart';
 import '../../core/widgets/poyshik_card.dart';
-import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import 'add_transaction_sheet.dart';
 import 'day_groups.dart';
@@ -152,14 +151,12 @@ class _DaySection extends ConsumerWidget {
                       unawaited(_delete(context, ref, group.items[i])),
                   child: TransactionTile(
                     view: group.items[i],
-                    onTap: group.items[i].tx.type == TransactionType.transfer
-                        ? null
-                        : () => unawaited(
-                            showAddTransactionSheet(
-                              context,
-                              existing: group.items[i].tx,
-                            ),
-                          ),
+                    onTap: () => unawaited(
+                      showAddTransactionSheet(
+                        context,
+                        existing: group.items[i].tx,
+                      ),
+                    ),
                   ),
                 ),
               ],

@@ -78,6 +78,11 @@
   "txNoAccounts": "Add an account first",
   "txPickCategory": "Pick a category",
   "txDeleted": "Transaction deleted",
+  "txFrom": "From",
+  "txTo": "To",
+  "txSavedTransfer": "Transfer saved",
+  "txTransferNeedsTwo": "Add a second account to transfer",
+  "txTransferSame": "Pick two different accounts",
   "activitySpent": "{amount} spent",
   "@activitySpent": {
     "placeholders": { "amount": { "type": "String" } }
