@@ -16,6 +16,10 @@ export const site = {
     playStoreUrl: clean(env.PUBLIC_PLAY_STORE_URL),
     /** Direct APK (e.g. a GitHub release asset), if you choose to offer one. */
     apkUrl: clean(env.PUBLIC_APK_URL),
+    /** Shown next to a direct APK download, e.g. "1.1.0". */
+    apkVersion: clean(env.PUBLIC_APK_VERSION),
+    /** Lowest Android version the app installs on (minSdk 24). */
+    minAndroid: '7.0',
   },
   /**
    * Maker credit in the footer. The visible sign-off is the brush signature at

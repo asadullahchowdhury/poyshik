@@ -506,6 +506,13 @@ const biggest = bars.indexOf(Math.max(...bars));
           <div class="cta__actions">
             <DownloadButton variant="accent" />
           </div>
+          {!site.download.playStoreUrl && site.download.apkUrl && (
+            <p class="cta__note">
+              {site.download.apkVersion && `Version ${site.download.apkVersion} · `}
+              Android {site.download.minAndroid}+ · direct APK. Your phone will ask you to allow
+              installs from your browser the first time.
+            </p>
+          )}
         </div>
       </div>
     </section>
@@ -1193,6 +1200,12 @@ const biggest = bars.indexOf(Math.max(...bars));
     margin-top: 36px;
     display: flex;
     justify-content: center;
+  }
+  .cta__note {
+    margin: 18px auto 0;
+    max-width: 44ch;
+    font: 0.85rem/1.5 var(--font-ui);
+    color: var(--on-forest-muted);
   }
 
   /* Responsive */
