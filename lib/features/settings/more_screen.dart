@@ -50,7 +50,11 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: Space.lg),
           _Group(
             children: [
-              _Item(icon: Icons.cloud_upload_rounded, label: l10n.moreBackup),
+              _Item(
+                icon: Icons.cloud_upload_rounded,
+                label: l10n.moreBackup,
+                onTap: () => context.go(Routes.backup),
+              ),
               _Item(
                 icon: Icons.tune_rounded,
                 label: l10n.moreSettings,

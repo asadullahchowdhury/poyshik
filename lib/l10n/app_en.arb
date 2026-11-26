@@ -138,6 +138,43 @@
       "amount": { "type": "String" }
     }
   },
+  "backupTitle": "Backup & export",
+  "backupSectionBackup": "Back up",
+  "backupExplain": "Your data lives only on this phone. Save a backup file somewhere safe — Google Drive, Telegram, email — so a lost or reset phone doesn't lose your history.",
+  "backupCreate": "Create backup",
+  "backupLast": "Last backup: {date}",
+  "@backupLast": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "backupNever": "No backup yet",
+  "backupSectionRestore": "Restore",
+  "backupRestoreExplain": "Replace everything in Poyshik with a backup file.",
+  "backupRestorePick": "Restore from file",
+  "backupConfirmTitle": "Replace all data?",
+  "backupConfirmBody": "Backup from {date}: {accounts} accounts, {categories} categories, {transactions} transactions.\n\nEverything currently in Poyshik will be replaced. This can't be undone.",
+  "@backupConfirmBody": {
+    "placeholders": {
+      "date": { "type": "String" },
+      "accounts": { "type": "int" },
+      "categories": { "type": "int" },
+      "transactions": { "type": "int" }
+    }
+  },
+  "backupConfirmAction": "Replace",
+  "backupCancel": "Cancel",
+  "backupRestored": "Restored {count} transactions",
+  "@backupRestored": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "backupInvalid": "That file isn't a Poyshik backup.",
+  "backupNewer": "This backup is from a newer version of Poyshik.",
+  "backupSectionExport": "Export",
+  "backupExportExplain": "All transactions as a CSV file for Excel or Google Sheets.",
+  "backupExportCsv": "Export CSV",
+  "backupFailed": "Something went wrong: {error}",
+  "@backupFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
   "settingsTitle": "Settings",
   "settingsAppearance": "Appearance",
   "settingsTheme": "Theme",

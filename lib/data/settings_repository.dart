@@ -8,6 +8,7 @@ abstract final class SettingKeys {
   static const lastAccountId = 'last_account_id';
   static const themeMode = 'theme_mode';
   static const weekStart = 'week_start';
+  static const lastBackupAt = 'last_backup_at';
 }
 
 /// Small key-value store in the database, so backups include settings.

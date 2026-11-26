@@ -7,6 +7,7 @@ import '../features/dev/component_gallery_screen.dart';
 import '../features/dev/database_debug_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/insights/insights_screen.dart';
+import '../features/settings/backup_screen.dart';
 import '../features/settings/more_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/transactions/activity_screen.dart';
@@ -21,6 +22,7 @@ abstract final class Routes {
   static const accounts = '/more/accounts';
   static const categories = '/more/categories';
   static const settings = '/more/settings';
+  static const backup = '/more/backup';
   static const gallery = '/more/gallery';
   static const database = '/more/database';
 }
@@ -69,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'categories',
                     builder: (context, state) => const CategoriesScreen(),
+                  ),
+                  GoRoute(
+                    path: 'backup',
+                    builder: (context, state) => const BackupScreen(),
                   ),
                   GoRoute(
                     path: 'settings',
