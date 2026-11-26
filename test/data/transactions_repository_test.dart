@@ -108,6 +108,38 @@ void main() {
     expect((await repo.byId(id))!.amount, 9900);
   });
 
+  test(
+    'views join account, transfer target and category, newest first',
+    () async {
+      final cash = await cashId();
+      final food = await cat('food');
+      final bkash = await accounts.create(
+        name: 'bKash',
+        type: AccountType.mobileWallet,
+        colorIndex: 6,
+      );
+      await repo.add(expense(cash, food.id, 10)); // 26 Nov 13:00
+      await repo.add((
+        type: TransactionType.transfer,
+        amount: const Money.taka(200),
+        accountId: cash,
+        categoryId: null,
+        toAccountId: bkash.id,
+        occurredAt: DateTime(2026, 11, 26, 18),
+        note: null,
+      ));
+
+      final views = await repo.watchViews().first;
+      expect(views, hasLength(2));
+      expect(views.first.tx.type, TransactionType.transfer);
+      expect(views.first.account.name, 'Cash');
+      expect(views.first.toAccount!.name, 'bKash');
+      expect(views.first.category, isNull);
+      expect(views.last.category!.systemKey, 'food');
+      expect(views.last.toAccount, isNull);
+    },
+  );
+
   test('update edits amount and category', () async {
     final cash = await cashId();
     final food = await cat('food');

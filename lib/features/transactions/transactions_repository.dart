@@ -17,6 +17,14 @@ typedef TransactionDraft = ({
   String? note,
 });
 
+/// A transaction with the rows it refers to, ready for display.
+typedef TransactionView = ({
+  TransactionRecord tx,
+  Account account,
+  Account? toAccount,
+  Category? category,
+});
+
 class TransactionsRepository {
   TransactionsRepository(this._db, this._settings);
 
@@ -66,6 +74,43 @@ class TransactionsRepository {
   Future<void> restore(TransactionRecord row) =>
       _db.into(_db.transactions).insert(row);
 
+  /// Newest first, with account/category joined in. [limit] keeps the list
+  /// light; paging can come later if needed.
+  Stream<List<TransactionView>> watchViews({int limit = 500}) {
+    final toAccounts = _db.alias(_db.accounts, 'to_acc');
+    final query =
+        _db.select(_db.transactions).join([
+            innerJoin(
+              _db.accounts,
+              _db.accounts.id.equalsExp(_db.transactions.accountId),
+            ),
+            leftOuterJoin(
+              toAccounts,
+              toAccounts.id.equalsExp(_db.transactions.toAccountId),
+            ),
+            leftOuterJoin(
+              _db.categories,
+              _db.categories.id.equalsExp(_db.transactions.categoryId),
+            ),
+          ])
+          ..orderBy([
+            OrderingTerm.desc(_db.transactions.occurredAt),
+            OrderingTerm.desc(_db.transactions.createdAt),
+          ])
+          ..limit(limit);
+    return query.watch().map(
+      (rows) => [
+        for (final r in rows)
+          (
+            tx: r.readTable(_db.transactions),
+            account: r.readTable(_db.accounts),
+            toAccount: r.readTableOrNull(toAccounts),
+            category: r.readTableOrNull(_db.categories),
+          ),
+      ],
+    );
+  }
+
   /// Active categories of [kind], most used first, then by sort order —
   /// so the categories you actually use sit within reach.
   Stream<List<Category>> watchCategoriesByUsage(CategoryKind kind) {
@@ -102,6 +147,10 @@ final transactionsRepositoryProvider = Provider<TransactionsRepository>(
     ref.watch(appDatabaseProvider),
     ref.watch(settingsRepositoryProvider),
   ),
+);
+
+final transactionViewsProvider = StreamProvider<List<TransactionView>>(
+  (ref) => ref.watch(transactionsRepositoryProvider).watchViews(),
 );
 
 final categoriesByUsageProvider =

@@ -76,5 +76,14 @@
   "txChooseAccount": "Pay from",
   "txChooseAccountIncome": "Receive into",
   "txNoAccounts": "Add an account first",
-  "txPickCategory": "Pick a category"
+  "txPickCategory": "Pick a category",
+  "txDeleted": "Transaction deleted",
+  "activitySpent": "{amount} spent",
+  "@activitySpent": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "activityEarned": "{amount} in",
+  "@activityEarned": {
+    "placeholders": { "amount": { "type": "String" } }
+  }
 }

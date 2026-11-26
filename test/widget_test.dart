@@ -1,9 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poyshik/app/app.dart';
+import 'package:poyshik/features/transactions/transactions_repository.dart';
 
 Future<void> _pumpApp(WidgetTester tester) async {
-  await tester.pumpWidget(const ProviderScope(child: PoyshikApp()));
+  await tester.pumpWidget(
+    ProviderScope(
+      // Widget tests avoid the real database; data logic is tested in test/data.
+      overrides: [
+        transactionViewsProvider.overrideWith((ref) => Stream.value(const [])),
+      ],
+      child: const PoyshikApp(),
+    ),
+  );
   await tester.pumpAndSettle();
 }
 

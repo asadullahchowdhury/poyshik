@@ -1,21 +1,172 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../app/theme/theme.dart';
+import '../../core/dates/periods.dart';
+import '../../core/money/money_format.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/poyshik_card.dart';
+import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
+import 'add_transaction_sheet.dart';
+import 'day_groups.dart';
+import 'transaction_tile.dart';
+import 'transactions_repository.dart';
 
-class ActivityScreen extends StatelessWidget {
+class ActivityScreen extends ConsumerWidget {
   const ActivityScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final views = ref.watch(transactionViewsProvider);
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabActivity)),
-      body: EmptyState(
-        icon: Icons.receipt_long_rounded,
-        title: l10n.activityEmptyTitle,
-        message: l10n.activityEmptyMessage,
+      body: views.when(
+        loading: () => const SizedBox.shrink(),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (list) {
+          if (list.isEmpty) {
+            return EmptyState(
+              icon: Icons.receipt_long_rounded,
+              title: l10n.activityEmptyTitle,
+              message: l10n.activityEmptyMessage,
+            );
+          }
+          final groups = groupByDay(list);
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(
+              Space.screen,
+              Space.xs,
+              Space.screen,
+              Space.huge,
+            ),
+            itemCount: groups.length,
+            itemBuilder: (context, i) => _DaySection(group: groups[i]),
+          );
+        },
       ),
+    );
+  }
+}
+
+class _DaySection extends ConsumerWidget {
+  const _DaySection({required this.group});
+
+  final DayGroup group;
+
+  String _dayLabel(AppLocalizations l10n) {
+    final days = calendarDaysBetween(group.day, DateTime.now());
+    if (days == 0) return l10n.txToday;
+    if (days == 1) return l10n.txYesterday;
+    final sameYear = group.day.year == DateTime.now().year;
+    return (sameYear ? DateFormat('EEE, d MMM') : DateFormat('EEE, d MMM y'))
+        .format(group.day);
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    TransactionView v,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(transactionsRepositoryProvider);
+    unawaited(HapticFeedback.mediumImpact());
+    final removed = await repo.delete(v.tx.id);
+    if (removed == null) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.txDeleted),
+          action: SnackBarAction(
+            label: l10n.txUndo,
+            onPressed: () => unawaited(repo.restore(removed)),
+          ),
+        ),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final totals = [
+      if (group.spent.isPositive)
+        l10n.activitySpent(MoneyFormat.format(group.spent)),
+      if (group.earned.isPositive)
+        l10n.activityEarned(MoneyFormat.format(group.earned)),
+    ].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Space.xs,
+            Space.xl,
+            Space.xs,
+            Space.sm,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _dayLabel(l10n),
+                  style: AppType.label.copyWith(
+                    color: c.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(totals, style: AppType.caption.copyWith(color: c.inkMuted)),
+            ],
+          ),
+        ),
+        PoyshikCard(
+          padding: const EdgeInsets.symmetric(vertical: Space.xs),
+          child: Column(
+            children: [
+              for (var i = 0; i < group.items.length; i++) ...[
+                if (i > 0)
+                  const Padding(
+                    padding: EdgeInsets.only(left: Space.lg + 42 + Space.md),
+                    child: Divider(),
+                  ),
+                Dismissible(
+                  key: ValueKey(group.items[i].tx.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: c.expense,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: Space.xl),
+                    child: Icon(Icons.delete_outline_rounded, color: c.onInk),
+                  ),
+                  onDismissed: (_) =>
+                      unawaited(_delete(context, ref, group.items[i])),
+                  child: TransactionTile(
+                    view: group.items[i],
+                    onTap: group.items[i].tx.type == TransactionType.transfer
+                        ? null
+                        : () => unawaited(
+                            showAddTransactionSheet(
+                              context,
+                              existing: group.items[i].tx,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
