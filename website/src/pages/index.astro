@@ -74,9 +74,9 @@ const biggest = bars.indexOf(Math.max(...bars));
             Personal expense tracker · {site.platform}
           </p>
           <h1 class="display h1" data-reveal style="--d:1">
-            Every taka,
+            Where did your taka go?
             <br />
-            <span class="italic-accent">accounted for.</span>
+            <span class="italic-accent">Now you know.</span>
           </h1>
           <p class="lede" data-reveal style="--d:2">
             Poyshik makes logging a day’s spending take seconds, then shows you what it adds up to:
@@ -203,6 +203,7 @@ const biggest = bars.indexOf(Math.max(...bars));
           </div>
           <div class="showcase__controls" data-reveal style="--d:2">
             <div class="tabs" role="tablist" aria-label="App screens">
+              <span class="tabs__indicator" aria-hidden="true"></span>
               {screens.map((s, i) => (
                 <button
                   type="button"
@@ -228,28 +229,51 @@ const biggest = bars.indexOf(Math.max(...bars));
 
         <div class="showcase__stage" id="showcase-panel" role="tabpanel" data-reveal style="--d:2">
           <div class="showcase__phone">
-            {screens.map((s, i) => (
-              <>
-                <div
-                  class:list={['screen', { 'is-active': i === 0 }]}
-                  data-screen={s.id}
-                  data-theme="light"
-                >
-                  <Phone src={s.light} alt={s.alt} width={320} />
-                </div>
-                <div class="screen" data-screen={s.id} data-theme="dark" aria-hidden="true">
-                  <Phone src={s.dark} alt={`${s.alt} Dark mode.`} width={320} />
-                </div>
-              </>
-            ))}
+            <!-- One frame; only the screen inside changes, like swiping in the app. -->
+            <Phone width={320}>
+              {screens.map((s, i) => (
+                <>
+                  <div
+                    class:list={['screen', { 'is-active': i === 0 }]}
+                    data-screen={s.id}
+                    data-theme="light"
+                    aria-hidden={i === 0 ? 'false' : 'true'}
+                  >
+                    <Image
+                      src={s.light}
+                      alt={s.alt}
+                      widths={[360, 540, 720, 1080]}
+                      sizes="(max-width: 600px) 70vw, 320px"
+                      format="webp"
+                      quality={82}
+                    />
+                  </div>
+                  <div class="screen" data-screen={s.id} data-theme="dark" aria-hidden="true">
+                    <Image
+                      src={s.dark}
+                      alt={`${s.alt} Dark mode.`}
+                      widths={[360, 540, 720, 1080]}
+                      sizes="(max-width: 600px) 70vw, 320px"
+                      format="webp"
+                      quality={82}
+                    />
+                  </div>
+                </>
+              ))}
+            </Phone>
           </div>
           <div class="showcase__captions">
-            {screens.map((s, i) => (
-              <p data-caption={s.id} hidden={i !== 0}>
-                {s.caption}
-              </p>
-            ))}
-            <p class="showcase__note">Screens rendered from the app with demo data.</p>
+            <div class="captions" aria-live="polite">
+              {screens.map((s, i) => (
+                <p
+                  data-caption={s.id}
+                  class:list={{ 'is-active': i === 0 }}
+                  aria-hidden={i === 0 ? 'false' : 'true'}
+                >
+                  {s.caption}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -381,7 +405,6 @@ const biggest = bars.indexOf(Math.max(...bars));
           <div class="chart" data-reveal style="--d:3">
             <div class="chart__head">
               <span>Day by day</span>
-              <span class="chart__tag">Illustration · demo data</span>
             </div>
             <div
               class="chart__bars"
@@ -694,11 +717,38 @@ const biggest = bars.indexOf(Math.max(...bars));
     align-items: center;
   }
   .tabs {
+    position: relative;
     display: inline-flex;
     padding: 4px;
     gap: 2px;
     border-radius: var(--radius-md);
     background: var(--sand);
+  }
+  /* The active pill glides and resizes between tabs (positioned by JS). */
+  .tabs__indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: var(--tab-w, 0px);
+    transform: translateX(var(--tab-x, 0px));
+    border-radius: 11px;
+    background: var(--forest);
+    box-shadow: 0 6px 16px -8px rgba(11, 42, 32, 0.7);
+    transition:
+      transform 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+      width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1);
+  }
+  .tabs button {
+    position: relative;
+    z-index: 1;
+  }
+  /* Before JS positions the pill (or without JS), the button carries it. */
+  .tabs:not(.is-ready) button[aria-selected='true'] {
+    background: var(--forest);
+  }
+  .tabs.is-ready button[aria-selected='true'] {
+    background: transparent;
   }
   .tabs button,
   .theme-toggle {
@@ -715,8 +765,10 @@ const biggest = bars.indexOf(Math.max(...bars));
       color 0.25s var(--ease);
   }
   .tabs button[aria-selected='true'] {
-    background: var(--forest);
     color: var(--on-forest);
+  }
+  .tabs button:not([aria-selected='true']):hover {
+    color: var(--ink);
   }
   .theme-toggle {
     display: inline-flex;
@@ -725,10 +777,21 @@ const biggest = bars.indexOf(Math.max(...bars));
     background: var(--cream);
     border: 1px solid var(--hairline);
     color: var(--ink);
+    transition:
+      background-color 0.4s var(--ease),
+      color 0.4s var(--ease),
+      border-color 0.4s var(--ease);
+  }
+  .theme-toggle svg {
+    transition: transform 0.6s cubic-bezier(0.3, 1.3, 0.4, 1);
   }
   .theme-toggle[aria-pressed='true'] {
     background: var(--forest-night);
+    border-color: var(--forest-night);
     color: var(--on-forest);
+  }
+  .theme-toggle[aria-pressed='true'] svg {
+    transform: rotate(-200deg) scale(1.08);
   }
   .showcase__stage {
     display: grid;
@@ -740,31 +803,66 @@ const biggest = bars.indexOf(Math.max(...bars));
     display: grid;
     justify-items: center;
   }
+  /* Screens stack inside one phone frame. --dir is +1 (moving right through
+     the tabs), -1 (moving left) or 0 (light/dark change: crossfade only). */
+  .showcase__phone {
+    --dir: 1;
+  }
   .screen {
-    grid-area: 1 / 1;
+    position: absolute;
+    inset: 0;
     opacity: 0;
-    transform: translateY(12px) scale(0.985);
-    transition:
-      opacity 0.45s var(--ease),
-      transform 0.45s var(--ease);
+    transform: translateX(calc(var(--dir) * 18%)) scale(0.98);
+    /* Waiting screens jump straight to the side the next one enters from;
+       only the entering and leaving screens animate. */
+    transition: none;
     pointer-events: none;
+  }
+  .screen.is-active,
+  .screen.is-leaving {
+    transition:
+      opacity 0.5s var(--ease),
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .screen :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .screen.is-active {
     opacity: 1;
     transform: none;
     pointer-events: auto;
+    z-index: 1;
   }
-  .showcase__captions p {
+  /* The screen being replaced exits the opposite way. */
+  .screen.is-leaving {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * -14%)) scale(0.98);
+  }
+  .captions {
+    display: grid;
+  }
+  .captions p {
+    grid-area: 1 / 1;
     font-family: var(--font-display);
     font-size: clamp(1.6rem, 3vw, 2.4rem);
     line-height: 1.15;
     margin: 0;
     max-width: 16em;
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+    transition:
+      opacity 0.45s var(--ease),
+      transform 0.55s var(--ease),
+      filter 0.45s var(--ease);
   }
-  .showcase__captions .showcase__note {
-    margin-top: 20px;
-    font: 0.85rem/1.4 var(--font-ui);
-    color: var(--ink-subtle);
+  .captions p.is-active {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition-delay: 0.08s;
   }
 
   /* Features bento */
@@ -978,12 +1076,6 @@ const biggest = bars.indexOf(Math.max(...bars));
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--on-forest-muted);
-  }
-  .chart__tag {
-    letter-spacing: 0.04em;
-    text-transform: none;
-    font-weight: 500;
-    opacity: 0.8;
   }
   .chart__bars {
     position: relative;

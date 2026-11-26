@@ -32,18 +32,26 @@ function reveals() {
     els.forEach((el) => el.classList.add('is-visible'));
     return;
   }
+  // Masked headlines start fully clipped (clip-path), and browsers report a
+  // fully clipped element as never intersecting, so it would never reveal.
+  // Watch such elements through their parent instead.
+  const masked = (el: HTMLElement) => el.matches('.display[data-reveal]');
+  const owners = new Map<Element, HTMLElement[]>();
   const io = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('is-visible');
-          io.unobserve(e.target);
-        }
+        if (!e.isIntersecting) continue;
+        for (const el of owners.get(e.target) ?? []) el.classList.add('is-visible');
+        io.unobserve(e.target);
       }
     },
-    { rootMargin: '0px 0px -10% 0px', threshold: 0.12 },
+    { rootMargin: '0px 0px -10% 0px', threshold: 0 },
   );
-  els.forEach((el) => io.observe(el));
+  els.forEach((el) => {
+    const target = masked(el) && el.parentElement ? el.parentElement : el;
+    owners.set(target, [...(owners.get(target) ?? []), el]);
+    io.observe(target);
+  });
 }
 
 /**
@@ -105,10 +113,29 @@ function showcase() {
   const panels = [...root.querySelectorAll<HTMLElement>('[data-screen]')];
   const captions = [...root.querySelectorAll<HTMLElement>('[data-caption]')];
   const toggle = root.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const tablist = root.querySelector<HTMLElement>('[role="tablist"]');
+  const indicator = root.querySelector<HTMLElement>('.tabs__indicator');
+  const stage = root.querySelector<HTMLElement>('.showcase__phone');
   let screen = tabs[0]?.dataset.tab ?? 'home';
   let theme: 'light' | 'dark' = 'light';
+  const order = tabs.map((t) => t.dataset.tab!);
 
-  const render = () => {
+  /** Slide the pill under the selected tab, matching its width. */
+  const moveIndicator = () => {
+    const active = tabs.find((t) => t.dataset.tab === screen);
+    if (!active || !indicator || !tablist) return;
+    indicator.style.setProperty('--tab-x', `${active.offsetLeft}px`);
+    indicator.style.setProperty('--tab-w', `${active.offsetWidth}px`);
+  };
+
+  /** dir: +1 / -1 slides the new screen in from that side; 0 crossfades. */
+  const render = (dir = 0) => {
+    // Commit the new direction before swapping classes, so the incoming
+    // screen starts from the correct side instead of the old one.
+    if (stage) {
+      stage.style.setProperty('--dir', String(dir));
+      void stage.offsetWidth;
+    }
     for (const t of tabs) {
       const on = t.dataset.tab === screen;
       t.setAttribute('aria-selected', String(on));
@@ -116,20 +143,35 @@ function showcase() {
     }
     for (const p of panels) {
       const on = p.dataset.screen === screen && p.dataset.theme === theme;
+      const wasOn = p.classList.contains('is-active');
+      if (wasOn && !on) {
+        // Exit the opposite way, then drop back to the resting state.
+        p.classList.add('is-leaving');
+        window.setTimeout(() => p.classList.remove('is-leaving'), 650);
+      }
+      if (on) p.classList.remove('is-leaving');
       p.classList.toggle('is-active', on);
       p.setAttribute('aria-hidden', String(!on));
     }
-    for (const c of captions) c.hidden = c.dataset.caption !== screen;
+    for (const c of captions) {
+      const on = c.dataset.caption === screen;
+      c.classList.toggle('is-active', on);
+      c.setAttribute('aria-hidden', String(!on));
+    }
     if (toggle) {
       toggle.setAttribute('aria-pressed', String(theme === 'dark'));
       toggle.querySelector('span')!.textContent = theme === 'dark' ? 'Dark' : 'Light';
     }
+    moveIndicator();
   };
 
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => {
-      screen = t.dataset.tab!;
-      render();
+      const next = t.dataset.tab!;
+      if (next === screen) return;
+      const dir = Math.sign(order.indexOf(next) - order.indexOf(screen));
+      screen = next;
+      render(reduced() ? 0 : dir);
     });
     t.addEventListener('keydown', (e) => {
       const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
@@ -142,9 +184,21 @@ function showcase() {
   });
   toggle?.addEventListener('click', () => {
     theme = theme === 'light' ? 'dark' : 'light';
-    render();
+    render(0);
   });
-  render();
+
+  // Place the pill without animating, then let it glide from then on.
+  render(0);
+  if (indicator) {
+    indicator.style.transition = 'none';
+    moveIndicator();
+    void indicator.offsetWidth;
+    indicator.style.transition = '';
+  }
+  tablist?.classList.add('is-ready');
+  addEventListener('resize', moveIndicator, { passive: true });
+  // Web fonts change tab widths once loaded.
+  void document.fonts?.ready.then(moveIndicator);
 }
 
 /** Header gains a backdrop once the page scrolls. */
