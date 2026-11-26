@@ -18,6 +18,12 @@ Future<void> _pumpApp(WidgetTester tester) async {
           (ref, query) => Stream.value(Money.zero),
         ),
         overallBudgetProvider.overrideWith((ref) => Stream.value(null)),
+        categoryTotalsProvider.overrideWith(
+          (ref, range) => Stream.value(const []),
+        ),
+        expenseEntriesProvider.overrideWith(
+          (ref, range) => Stream.value(const []),
+        ),
         topCategoriesProvider.overrideWith(
           (ref, range) => Stream.value(const []),
         ),

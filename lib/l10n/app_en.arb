@@ -88,6 +88,39 @@
   "categoryArchive": "Archive category",
   "categoryUnarchive": "Restore category",
   "categoryArchiveHint": "Archived categories keep their past transactions but disappear from quick entry.",
+  "insightsWeek": "Week",
+  "insightsMonth": "Month",
+  "insightsSpent": "Spent",
+  "insightsHighlights": "Highlights",
+  "insightsDayByDay": "Day by day",
+  "insightsByCategory": "By category",
+  "insightsEmptyPeriod": "Nothing logged in this period.",
+  "insightTopCategory": "{category} was {percent}% of your spending.",
+  "@insightTopCategory": {
+    "placeholders": {
+      "category": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+  "insightChange": "{percent}% {direction, select, more{more} other{less}} than last {period, select, week{week} other{month}}.",
+  "@insightChange": {
+    "placeholders": {
+      "percent": { "type": "int" },
+      "direction": { "type": "String" },
+      "period": { "type": "String" }
+    }
+  },
+  "insightDailyAverage": "About {amount} a day on average.",
+  "@insightDailyAverage": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "insightBiggestDay": "Biggest day: {day}, {amount}.",
+  "@insightBiggestDay": {
+    "placeholders": {
+      "day": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
   "budgetTitle": "Monthly budget",
   "budgetHelp": "How much you want to spend each month in total. Poyshik turns it into a daily amount you can safely spend.",
   "budgetAmount": "Budget per month",

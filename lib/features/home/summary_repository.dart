@@ -37,6 +37,31 @@ class SummaryRepository {
         .map((row) => Money(row.read<int>('total')));
   }
 
+  /// (time, amount) of every [type] entry in [range], for per-day charts.
+  /// Bucketed in Dart so days follow local time exactly.
+  Stream<List<(DateTime, Money)>> watchEntries(
+    TransactionType type,
+    DateRange range,
+  ) {
+    return (_db.selectOnly(_db.transactions)
+          ..addColumns([_db.transactions.occurredAt, _db.transactions.amount])
+          ..where(
+            _db.transactions.type.equalsValue(type) &
+                _db.transactions.occurredAt.isBiggerOrEqualValue(range.start) &
+                _db.transactions.occurredAt.isSmallerThanValue(range.end),
+          ))
+        .watch()
+        .map(
+          (rows) => [
+            for (final r in rows)
+              (
+                r.read(_db.transactions.occurredAt)!,
+                Money(r.read(_db.transactions.amount)!),
+              ),
+          ],
+        );
+  }
+
   /// Biggest categories of [type] in [range], largest first.
   Stream<List<CategoryTotal>> watchCategoryTotals(
     DateRange range, {
@@ -80,6 +105,21 @@ final topCategoriesProvider =
       (ref, range) => ref
           .watch(summaryRepositoryProvider)
           .watchCategoryTotals(range, limit: 4),
+    );
+
+/// Every expense category in a range, largest first (Insights donut).
+final categoryTotalsProvider =
+    StreamProvider.family<List<CategoryTotal>, DateRange>(
+      (ref, range) =>
+          ref.watch(summaryRepositoryProvider).watchCategoryTotals(range),
+    );
+
+/// Expense entries in a range (Insights daily bars).
+final expenseEntriesProvider =
+    StreamProvider.family<List<(DateTime, Money)>, DateRange>(
+      (ref, range) => ref
+          .watch(summaryRepositoryProvider)
+          .watchEntries(TransactionType.expense, range),
     );
 
 /// Percentage change from [previous] to [current], rounded; null when there
