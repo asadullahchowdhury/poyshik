@@ -1,4 +1,4 @@
-{
+﻿{
   "@@locale": "en",
   "appTitle": "Poyshik",
   "@appTitle": {
@@ -24,7 +24,6 @@
   "activityEmptyMessage": "Everything you log will show up here, grouped by day.",
   "insightsEmptyTitle": "Insights need a little data",
   "insightsEmptyMessage": "Log a few expenses and your patterns will appear here.",
-  "addSheetPlaceholder": "Quick entry arrives in Phase 1.",
 
   "moreAccounts": "Accounts",
   "moreCategories": "Categories",
@@ -59,5 +58,23 @@
   "accountTypeBank": "Bank",
   "accountTypeMobileWallet": "Mobile wallet",
   "accountTypeCard": "Card",
-  "accountTypeOther": "Other"
+  "accountTypeOther": "Other",
+
+  "txExpense": "Expense",
+  "txIncome": "Income",
+  "txTransfer": "Transfer",
+  "txEditTitle": "Edit transaction",
+  "txToday": "Today",
+  "txYesterday": "Yesterday",
+  "txAddNote": "Note",
+  "txNoteHint": "What was it for?",
+  "txSave": "Save",
+  "txSavedExpense": "Expense saved",
+  "txSavedIncome": "Income saved",
+  "txUpdated": "Transaction updated",
+  "txUndo": "Undo",
+  "txChooseAccount": "Pay from",
+  "txChooseAccountIncome": "Receive into",
+  "txNoAccounts": "Add an account first",
+  "txPickCategory": "Pick a category"
 }

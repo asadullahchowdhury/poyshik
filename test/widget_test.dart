@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:poyshik/app/app.dart';
 
 Future<void> _pumpApp(WidgetTester tester) async {
@@ -28,14 +27,6 @@ void main() {
     await tester.tap(find.text('Insights'));
     await tester.pumpAndSettle();
     expect(find.text('Insights need a little data'), findsOneWidget);
-  });
-
-  testWidgets('add button opens the entry sheet', (tester) async {
-    await _pumpApp(tester);
-
-    await tester.tap(find.byIcon(Icons.add_rounded));
-    await tester.pumpAndSettle();
-    expect(find.text('Quick entry arrives in Phase 1.'), findsOneWidget);
   });
 
   testWidgets('More opens the design gallery and keeps tab state', (
