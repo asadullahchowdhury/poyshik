@@ -9,6 +9,7 @@ import '../../app/router.dart';
 import '../../app/theme/theme.dart';
 import '../../core/dates/clock.dart';
 import '../../core/dates/periods.dart';
+import '../../core/dates/week_start_provider.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/amount_text.dart';
@@ -357,7 +358,10 @@ class _TodayWeek extends ConsumerWidget {
       children: [
         tile(l10n.homeToday, spent(dayRange(now))),
         const SizedBox(width: Space.md),
-        tile(l10n.homeThisWeek, spent(weekRange(now))),
+        tile(
+          l10n.homeThisWeek,
+          spent(weekRange(now, startDay: ref.watch(weekStartProvider))),
+        ),
       ],
     );
   }

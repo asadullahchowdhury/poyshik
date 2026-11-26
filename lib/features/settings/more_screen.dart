@@ -51,7 +51,11 @@ class MoreScreen extends StatelessWidget {
           _Group(
             children: [
               _Item(icon: Icons.cloud_upload_rounded, label: l10n.moreBackup),
-              _Item(icon: Icons.tune_rounded, label: l10n.moreSettings),
+              _Item(
+                icon: Icons.tune_rounded,
+                label: l10n.moreSettings,
+                onTap: () => context.go(Routes.settings),
+              ),
             ],
           ),
           if (kDebugMode) ...[

@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app/theme/theme.dart';
 import '../../core/dates/clock.dart';
 import '../../core/dates/periods.dart';
+import '../../core/dates/week_start_provider.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/amount_text.dart';
@@ -27,11 +28,13 @@ class InsightsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final now = ref.watch(clockProvider)();
     final period = ref.watch(insightsPeriodProvider);
-    final range = periodRange(period, now);
-    final previous = periodRange((
-      kind: period.kind,
-      offset: period.offset - 1,
-    ), now);
+    final weekStart = ref.watch(weekStartProvider);
+    final range = periodRange(period, now, weekStart: weekStart);
+    final previous = periodRange(
+      (kind: period.kind, offset: period.offset - 1),
+      now,
+      weekStart: weekStart,
+    );
 
     Money total(TransactionType t, DateRange r) =>
         ref.watch(periodTotalProvider((type: t, range: r))).value ?? Money.zero;

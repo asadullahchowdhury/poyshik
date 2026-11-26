@@ -10,11 +10,16 @@ enum PeriodKind { week, month }
 /// before it ([offset] −1, −2, …).
 typedef InsightsPeriod = ({PeriodKind kind, int offset});
 
-DateRange periodRange(InsightsPeriod p, DateTime now) {
+DateRange periodRange(
+  InsightsPeriod p,
+  DateTime now, {
+  int weekStart = kWeekStartDay,
+}) {
   return switch (p.kind) {
     PeriodKind.month => monthRange(DateTime(now.year, now.month + p.offset)),
     PeriodKind.week => weekRange(
       DateTime(now.year, now.month, now.day + 7 * p.offset),
+      startDay: weekStart,
     ),
   };
 }

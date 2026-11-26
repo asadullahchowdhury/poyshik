@@ -138,6 +138,21 @@
       "amount": { "type": "String" }
     }
   },
+  "settingsTitle": "Settings",
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsCalendar": "Calendar",
+  "settingsWeekStart": "Week starts on",
+  "settingsWeekStartHelp": "Used for “This week” on Home and weekly Insights.",
+  "settingsAbout": "About",
+  "settingsVersion": "Version {version}",
+  "@settingsVersion": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "settingsPrivacy": "Your data stays on this phone. No account, no cloud, no tracking.",
   "budgetTitle": "Monthly budget",
   "budgetHelp": "How much you want to spend each month in total. Poyshik turns it into a daily amount you can safely spend.",
   "budgetAmount": "Budget per month",
