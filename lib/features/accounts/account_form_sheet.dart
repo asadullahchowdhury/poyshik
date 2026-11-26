@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -7,6 +7,7 @@ import '../../app/theme/theme.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/app_icons.dart';
+import '../../core/widgets/palette_picker.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
@@ -185,17 +186,9 @@ class _AccountFormSheetState extends ConsumerState<_AccountFormSheet> {
               const SizedBox(height: Space.xl),
               Text(l10n.accountColor, style: label),
               const SizedBox(height: Space.sm),
-              Wrap(
-                spacing: Space.sm + 2,
-                runSpacing: Space.sm + 2,
-                children: [
-                  for (var i = 0; i < PoyshikColors.categoryPalette.length; i++)
-                    _ColorDot(
-                      color: PoyshikColors.categoryPalette[i],
-                      selected: _colorIndex == i,
-                      onTap: () => setState(() => _colorIndex = i),
-                    ),
-                ],
+              PalettePicker(
+                selected: _colorIndex,
+                onChanged: (i) => setState(() => _colorIndex = i),
               ),
               const SizedBox(height: Space.xl),
               TextFormField(
@@ -289,42 +282,6 @@ class _Chip extends StatelessWidget {
               Text(label, style: AppType.label.copyWith(color: fg)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorDot extends StatelessWidget {
-  const _ColorDot({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: 34,
-        height: 34,
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? c.ink : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );
