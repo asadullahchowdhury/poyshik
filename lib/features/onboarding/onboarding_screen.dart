@@ -233,17 +233,21 @@ class _WelcomePage extends StatelessWidget {
         ),
       ],
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: c.accent,
-            borderRadius: BorderRadius.circular(Radii.lg),
-          ),
-          child: Center(
-            child: Text(
-              '৳',
-              style: AppType.amountLarge.copyWith(color: c.onAccent),
+        // ListView stretches children to full width; Align keeps the tile 64px.
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: c.accent,
+              borderRadius: BorderRadius.circular(Radii.lg),
+            ),
+            child: Center(
+              child: Text(
+                '৳',
+                style: AppType.amountLarge.copyWith(color: c.onAccent),
+              ),
             ),
           ),
         ),

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App background (matches PoyshikColors.light.background). -->
+    <color name="poyshik_bg">#F7F7F4</color>
+    <!-- Launcher icon: ink tile with a marigold budget ring. -->
+    <color name="icon_bg">#121417</color>
+    <color name="icon_mark">#F2A93B</color>
+</resources>
