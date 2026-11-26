@@ -1,0 +1,38 @@
+---
+// Shows a real download link only when one is configured (.env); otherwise an
+// honest "coming soon" state. Never links to a store page that doesn't exist.
+import { site, downloadAvailable } from '../config/site';
+
+interface Props {
+  variant?: 'primary' | 'accent';
+}
+const { variant = 'primary' } = Astro.props;
+const href = site.download.playStoreUrl ?? site.download.apkUrl;
+const label = site.download.playStoreUrl
+  ? 'Get it on Google Play'
+  : site.download.apkUrl
+    ? 'Download for Android'
+    : 'Coming soon to Android';
+---
+
+{downloadAvailable ? (
+  <a class={`btn btn-${variant}`} href={href} rel="noopener">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 3v11.2l4.6-4.6 1.4 1.4-7 7-7-7 1.4-1.4 4.6 4.6V3h2ZM5 19h14v2H5v-2Z"
+      />
+    </svg>
+    {label}
+  </a>
+) : (
+  <span class={`btn btn-${variant}`} aria-disabled="true" role="note">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 5v5.4l3.6 2.1-1 1.7L11 13.6V7h2Z"
+      />
+    </svg>
+    {label}
+  </span>
+)}

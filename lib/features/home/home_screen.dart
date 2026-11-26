@@ -13,10 +13,14 @@ import '../../core/dates/week_start_provider.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/amount_text.dart';
+import '../../core/widgets/animated_amount.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/balance_text.dart';
 import '../../core/widgets/category_icon.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
+import '../../core/widgets/poyshik_logo.dart';
+import '../../core/widgets/section_header.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
@@ -27,8 +31,8 @@ import '../transactions/transaction_tile.dart';
 import '../transactions/transactions_repository.dart';
 import 'summary_repository.dart';
 
-/// The month at a glance: what you spent, how that compares, where it went,
-/// what you have, and what you logged last.
+/// The month at a glance: what you spent, how that compares, what's safe to
+/// spend, where it went, what you have, and what you logged last.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -38,60 +42,69 @@ class HomeScreen extends ConsumerWidget {
     final now = ref.watch(clockProvider)();
     final views = ref.watch(transactionViewsProvider).value ?? const [];
 
+    final sections = <Widget>[
+      _HeroCard(now: now),
+      _TodayWeek(now: now),
+      const _AccountsStrip(),
+      if (views.isEmpty)
+        _FirstRun(title: l10n.homeFirstTitle, message: l10n.homeFirstMessage)
+      else ...[
+        _TopCategories(range: monthRange(now)),
+        _Recent(views: views.take(5).toList()),
+      ],
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: Text(DateFormat('MMMM y').format(now))),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          Space.screen,
-          Space.sm,
-          Space.screen,
-          Space.huge,
-        ),
-        children: [
-          _HeroCard(now: now),
-          const SizedBox(height: Space.md),
-          _TodayWeek(now: now),
-          const SizedBox(height: Space.xxl),
-          const _AccountsStrip(),
-          if (views.isEmpty) ...[
-            const SizedBox(height: Space.xxl),
-            _FirstRun(
-              title: l10n.homeFirstTitle,
-              message: l10n.homeFirstMessage,
-            ),
-          ] else ...[
-            const SizedBox(height: Space.xxl),
-            _TopCategories(range: monthRange(now)),
-            const SizedBox(height: Space.xxl),
-            _Recent(views: views.take(5).toList()),
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            Space.screen,
+            Space.lg,
+            Space.screen,
+            Space.huge,
+          ),
+          children: [
+            Reveal(child: _Header(now: now)),
+            const SizedBox(height: Space.xl),
+            for (var i = 0; i < sections.length; i++) ...[
+              if (i > 0) SizedBox(height: i == 1 ? Space.md : Space.xxl),
+              Reveal(index: i + 1, child: sections[i]),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title, {this.trailing});
+/// Logo, greeting in the serif voice, and today's date.
+class _Header extends StatelessWidget {
+  const _Header({required this.now});
 
-  final String title;
-  final Widget? trailing;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: Space.xs, bottom: Space.md),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title.toUpperCase(),
-              style: AppType.overline.copyWith(color: context.colors.inkMuted),
-            ),
-          ),
-          ?trailing,
-        ],
-      ),
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final greeting = now.hour < 12
+        ? l10n.homeGreetingMorning
+        : now.hour < 17
+        ? l10n.homeGreetingAfternoon
+        : l10n.homeGreetingEvening;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const PoyshikLogo(size: 22),
+        const SizedBox(height: Space.xl),
+        Text('$greeting.', style: AppType.display.copyWith(color: c.ink)),
+        const SizedBox(height: Space.xs),
+        Text(
+          DateFormat('EEEE, d MMMM').format(now),
+          style: AppType.body.copyWith(color: c.inkMuted),
+        ),
+      ],
     );
   }
 }
@@ -117,99 +130,88 @@ class _HeroCard extends ConsumerWidget {
 
     final spent = total(TransactionType.expense, month);
     final income = total(TransactionType.income, month);
-    final lastSpent = total(TransactionType.expense, lastSoFar);
-    final change = percentChange(spent, lastSpent);
-    final net = income - spent;
-
-    String? compare;
-    Color compareColor = c.inkMuted;
-    if (change != null) {
-      if (change > 0) {
-        compare = l10n.homeMoreThanLastMonth(change);
-        compareColor = c.warning;
-      } else if (change < 0) {
-        compare = l10n.homeLessThanLastMonth(-change);
-        compareColor = c.income;
-      } else {
-        compare = l10n.homeSameAsLastMonth;
-      }
-    }
-
+    final change = percentChange(
+      spent,
+      total(TransactionType.expense, lastSoFar),
+    );
     final budget = ref.watch(overallBudgetProvider).value;
     final status = budget == null
         ? null
         : budgetStatus(budget: budget, spent: spent, now: now);
 
     return PoyshikCard(
+      color: c.hero,
+      bordered: false,
+      elevated: true,
+      radius: Radii.xl,
+      padding: EdgeInsets.zero,
       onTap: () => unawaited(showBudgetSheet(context)),
-      padding: const EdgeInsets.all(Space.xxl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Text(
-            l10n
-                .homeSpentThisMonth(DateFormat.MMMM().format(now))
-                .toUpperCase(),
-            style: AppType.overline.copyWith(color: c.inkMuted),
+          // Brand moment: the leaf mark as a faint watermark.
+          Positioned(
+            right: -46,
+            top: -26,
+            child: PoyshikSymbol(
+              height: 170,
+              ink: c.onHero.withValues(alpha: 0.045),
+              accent: c.accent.withValues(alpha: 0.09),
+            ),
           ),
-          const SizedBox(height: Space.sm),
-          AmountText(spent, size: AmountSize.hero),
-          if (status != null)
-            _BudgetBlock(status: status)
-          else ...[
-            const SizedBox(height: Space.sm),
-            Row(
+          Padding(
+            padding: const EdgeInsets.all(Space.xxl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.add_circle_outline_rounded, size: 16, color: c.ink),
-                const SizedBox(width: Space.xs),
                 Text(
-                  l10n.budgetSetPrompt,
-                  style: AppType.label.copyWith(
-                    color: c.ink,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  l10n
+                      .homeSpentThisMonth(DateFormat.MMMM().format(now))
+                      .toUpperCase(),
+                  style: AppType.overline.copyWith(color: c.onHeroMuted),
+                ),
+                const SizedBox(height: Space.sm),
+                AnimatedAmountText(
+                  spent,
+                  size: AmountSize.hero,
+                  color: c.onHero,
+                ),
+                if (change != null) ...[
+                  const SizedBox(height: Space.md),
+                  _ComparePill(change: change),
+                ],
+                const SizedBox(height: Space.xl),
+                if (status != null)
+                  _BudgetBlock(status: status)
+                else
+                  _SetBudgetPrompt(label: l10n.budgetSetPrompt),
+                const SizedBox(height: Space.xl),
+                Container(height: 1, color: c.onHero.withValues(alpha: 0.12)),
+                const SizedBox(height: Space.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _HeroFigure(
+                        label: l10n.homeIncome,
+                        child: AnimatedAmountText(income, color: c.onHero),
+                      ),
+                    ),
+                    Expanded(
+                      child: _HeroFigure(
+                        label: l10n.homeNet,
+                        child: AnimatedAmountText(
+                          (income - spent).abs(),
+                          showSign: true,
+                          tone: (income - spent).isNegative
+                              ? AmountTone.expense
+                              : AmountTone.income,
+                          color: c.onHero,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-          if (compare != null) ...[
-            const SizedBox(height: Space.sm),
-            Row(
-              children: [
-                Icon(
-                  change! > 0
-                      ? Icons.trending_up_rounded
-                      : change < 0
-                      ? Icons.trending_down_rounded
-                      : Icons.trending_flat_rounded,
-                  size: 16,
-                  color: compareColor,
-                ),
-                const SizedBox(width: Space.xs),
-                Expanded(
-                  child: Text(
-                    compare,
-                    style: AppType.label.copyWith(color: compareColor),
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: Space.xl),
-          const Divider(),
-          const SizedBox(height: Space.lg),
-          Row(
-            children: [
-              Expanded(
-                child: _Figure(
-                  label: l10n.homeIncome,
-                  child: AmountText(income, tone: AmountTone.income),
-                ),
-              ),
-              Expanded(
-                child: _Figure(label: l10n.homeNet, child: BalanceText(net)),
-              ),
-            ],
           ),
         ],
       ),
@@ -217,7 +219,79 @@ class _HeroCard extends ConsumerWidget {
   }
 }
 
-/// Budget progress and the daily "safe to spend" figure.
+class _ComparePill extends StatelessWidget {
+  const _ComparePill({required this.change});
+
+  final int change;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final (icon, text, color) = change > 0
+        ? (
+            Icons.trending_up_rounded,
+            l10n.homeMoreThanLastMonth(change),
+            c.accent,
+          )
+        : change < 0
+        ? (
+            Icons.trending_down_rounded,
+            l10n.homeLessThanLastMonth(-change),
+            Color.lerp(c.income, Colors.white, 0.45)!,
+          )
+        : (
+            Icons.trending_flat_rounded,
+            l10n.homeSameAsLastMonth,
+            c.onHeroMuted,
+          );
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Space.md,
+        vertical: Space.xs + 2,
+      ),
+      decoration: BoxDecoration(
+        color: c.onHero.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(Radii.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: Space.xs + 2),
+          Flexible(
+            child: Text(text, style: AppType.caption.copyWith(color: c.onHero)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SetBudgetPrompt extends StatelessWidget {
+  const _SetBudgetPrompt({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Row(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle),
+          child: Icon(Icons.add_rounded, size: 18, color: c.onAccent),
+        ),
+        const SizedBox(width: Space.md),
+        Text(label, style: AppType.bodyStrong.copyWith(color: c.onHero)),
+      ],
+    );
+  }
+}
+
+/// Budget progress and the daily "safe to spend" figure, on the hero.
 class _BudgetBlock extends StatelessWidget {
   const _BudgetBlock({required this.status});
 
@@ -227,32 +301,46 @@ class _BudgetBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
-    final barColor = status.isOver
+    final bar = status.isOver
         ? c.warning
         : status.progress > 0.85
-        ? c.expense
+        ? Color.lerp(c.accent, c.expense, 0.5)!
         : c.accent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: Space.xs),
-        Text(
-          l10n.budgetOf(MoneyFormat.format(status.budget)),
-          style: AppType.label.copyWith(color: c.inkMuted),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.budgetOf(MoneyFormat.format(status.budget)),
+                style: AppType.label.copyWith(color: c.onHeroMuted),
+              ),
+            ),
+            Text(
+              '${(status.progress * 100).round()}%',
+              style: AppType.label.copyWith(
+                color: c.onHero,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: Space.lg),
+        const SizedBox(height: Space.sm),
         ClipRRect(
           borderRadius: BorderRadius.circular(Radii.pill),
           child: TweenAnimationBuilder<double>(
-            tween: Tween(end: status.progress.clamp(0, 1)),
-            duration: const Duration(milliseconds: 600),
+            tween: Tween(begin: 0, end: status.progress.clamp(0, 1)),
+            duration: Motion.reduced(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 900),
             curve: Curves.easeOutCubic,
             builder: (context, v, _) => LinearProgressIndicator(
               value: v,
               minHeight: 8,
-              backgroundColor: c.surfaceRaised,
-              color: barColor,
+              backgroundColor: c.onHero.withValues(alpha: 0.14),
+              color: bar,
             ),
           ),
         ),
@@ -264,28 +352,21 @@ class _BudgetBlock extends StatelessWidget {
               child: status.isOver
                   ? Text(
                       l10n.budgetOver(MoneyFormat.format(-status.remaining)),
-                      style: AppType.bodyStrong.copyWith(color: c.warning),
+                      style: AppType.bodyStrong.copyWith(color: c.accent),
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.budgetSafeToSpend,
-                          style: AppType.label.copyWith(color: c.inkMuted),
-                        ),
-                        const SizedBox(height: Space.xxs),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            AmountText(status.perDay),
-                            Text(
-                              l10n.budgetPerDay,
-                              style: AppType.label.copyWith(color: c.inkMuted),
-                            ),
-                          ],
-                        ),
-                      ],
+                  : _HeroFigure(
+                      label: l10n.budgetSafeToSpend,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          AnimatedAmountText(status.perDay, color: c.onHero),
+                          Text(
+                            l10n.budgetPerDay,
+                            style: AppType.label.copyWith(color: c.onHeroMuted),
+                          ),
+                        ],
+                      ),
                     ),
             ),
             Container(
@@ -294,12 +375,12 @@ class _BudgetBlock extends StatelessWidget {
                 vertical: Space.xs + 2,
               ),
               decoration: BoxDecoration(
-                color: c.surfaceRaised,
+                color: c.onHero.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(Radii.pill),
               ),
               child: Text(
                 l10n.budgetDaysLeft(status.daysLeft),
-                style: AppType.caption.copyWith(color: c.ink),
+                style: AppType.caption.copyWith(color: c.onHero),
               ),
             ),
           ],
@@ -309,8 +390,8 @@ class _BudgetBlock extends StatelessWidget {
   }
 }
 
-class _Figure extends StatelessWidget {
-  const _Figure({required this.label, required this.child});
+class _HeroFigure extends StatelessWidget {
+  const _HeroFigure({required this.label, required this.child});
 
   final String label;
   final Widget child;
@@ -322,7 +403,7 @@ class _Figure extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppType.label.copyWith(color: context.colors.inkMuted),
+          style: AppType.label.copyWith(color: context.colors.onHeroMuted),
         ),
         const SizedBox(height: Space.xxs),
         child,
@@ -339,6 +420,7 @@ class _TodayWeek extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final c = context.colors;
     Money spent(DateRange r) =>
         ref
             .watch(
@@ -347,18 +429,48 @@ class _TodayWeek extends ConsumerWidget {
             .value ??
         Money.zero;
 
-    Widget tile(String label, Money amount) => Expanded(
+    Widget tile(IconData icon, String label, Money amount) => Expanded(
       child: PoyshikCard(
         padding: const EdgeInsets.all(Space.lg),
-        child: _Figure(label: label, child: AmountText(amount)),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: c.surfaceRaised,
+                borderRadius: BorderRadius.circular(Radii.sm),
+              ),
+              child: Icon(icon, size: 18, color: c.brand),
+            ),
+            const SizedBox(width: Space.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: AppType.caption.copyWith(color: c.inkMuted),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: AnimatedAmountText(amount),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
     return Row(
       children: [
-        tile(l10n.homeToday, spent(dayRange(now))),
+        tile(Icons.wb_sunny_outlined, l10n.homeToday, spent(dayRange(now))),
         const SizedBox(width: Space.md),
         tile(
+          Icons.date_range_rounded,
           l10n.homeThisWeek,
           spent(weekRange(now, startDay: ref.watch(weekStartProvider))),
         ),
@@ -380,12 +492,15 @@ class _AccountsStrip extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
+        SectionHeader(
           l10n.homeAccounts,
-          trailing: BalanceText(total, size: AmountSize.small),
+          trailing: SectionAction(
+            label: MoneyFormat.format(total),
+            onTap: () => context.go(Routes.accounts),
+          ),
         ),
         SizedBox(
-          height: 68,
+          height: 92,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
@@ -393,35 +508,43 @@ class _AccountsStrip extends ConsumerWidget {
             separatorBuilder: (_, _) => const SizedBox(width: Space.md),
             itemBuilder: (context, i) {
               final a = accounts[i];
-              return PoyshikCard(
-                onTap: () => context.go(Routes.accounts),
-                padding: const EdgeInsets.fromLTRB(
-                  Space.md,
-                  Space.md,
-                  Space.lg,
-                  Space.md,
-                ),
-                child: Row(
-                  children: [
-                    CategoryIcon(
-                      icon: AppIcons.of(a.account.icon),
-                      color:
-                          PoyshikColors.categoryPalette[a.account.colorIndex],
-                      size: 38,
-                    ),
-                    const SizedBox(width: Space.md),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          a.account.name,
-                          style: AppType.caption.copyWith(color: c.inkMuted),
-                        ),
-                        BalanceText(a.balance, size: AmountSize.small),
-                      ],
-                    ),
-                  ],
+              final color = PoyshikColors.categoryPalette[a.account.colorIndex];
+              return SizedBox(
+                width: 148,
+                child: PoyshikCard(
+                  onTap: () => context.go(Routes.accounts),
+                  padding: const EdgeInsets.all(Space.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          CategoryIcon(
+                            icon: AppIcons.of(a.account.icon),
+                            color: color,
+                            size: 26,
+                          ),
+                          const SizedBox(width: Space.sm),
+                          Expanded(
+                            child: Text(
+                              a.account.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppType.caption.copyWith(
+                                color: c.inkMuted,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: BalanceText(a.balance),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -444,11 +567,18 @@ class _TopCategories extends ConsumerWidget {
     final totals = ref.watch(topCategoriesProvider(range)).value ?? const [];
     if (totals.isEmpty) return const SizedBox.shrink();
     final max = totals.first.total.minor;
+    final reduced = Motion.reduced(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(l10n.homeTopCategories),
+        SectionHeader(
+          l10n.homeTopCategories,
+          trailing: SectionAction(
+            label: l10n.tabInsights,
+            onTap: () => context.go(Routes.insights),
+          ),
+        ),
         PoyshikCard(
           child: Column(
             children: [
@@ -460,7 +590,7 @@ class _TopCategories extends ConsumerWidget {
                       icon: AppIcons.of(totals[i].category.icon),
                       color: PoyshikColors
                           .categoryPalette[totals[i].category.colorIndex],
-                      size: 36,
+                      size: 38,
                     ),
                     const SizedBox(width: Space.md),
                     Expanded(
@@ -484,17 +614,28 @@ class _TopCategories extends ConsumerWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: Space.xs + 2),
+                          const SizedBox(height: Space.sm),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(Radii.pill),
-                            child: LinearProgressIndicator(
-                              value: max == 0 ? 0 : totals[i].total.minor / max,
-                              minHeight: 6,
-                              backgroundColor: c.surfaceRaised,
-                              color:
-                                  PoyshikColors.categoryPalette[totals[i]
-                                      .category
-                                      .colorIndex],
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(
+                                begin: 0,
+                                end: max == 0 ? 0 : totals[i].total.minor / max,
+                              ),
+                              duration: reduced
+                                  ? Duration.zero
+                                  : Duration(milliseconds: 600 + i * 120),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, v, _) =>
+                                  LinearProgressIndicator(
+                                    value: v,
+                                    minHeight: 6,
+                                    backgroundColor: c.surfaceRaised,
+                                    color:
+                                        PoyshikColors.categoryPalette[totals[i]
+                                            .category
+                                            .colorIndex],
+                                  ),
                             ),
                           ),
                         ],
@@ -519,21 +660,14 @@ class _Recent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final c = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(
+        SectionHeader(
           l10n.homeRecent,
-          trailing: GestureDetector(
+          trailing: SectionAction(
+            label: l10n.homeSeeAll,
             onTap: () => context.go(Routes.activity),
-            child: Text(
-              l10n.homeSeeAll,
-              style: AppType.label.copyWith(
-                color: c.ink,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
         ),
         PoyshikCard(
@@ -576,8 +710,8 @@ class _FirstRun extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: c.accent,
               borderRadius: BorderRadius.circular(Radii.md),
@@ -589,7 +723,7 @@ class _FirstRun extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppType.titleMedium.copyWith(color: c.ink)),
+                Text(title, style: AppType.displaySmall.copyWith(color: c.ink)),
                 const SizedBox(height: Space.xs),
                 Text(message, style: AppType.label.copyWith(color: c.inkMuted)),
               ],

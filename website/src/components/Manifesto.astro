@@ -1,0 +1,64 @@
+---
+// A statement that "writes itself" as you scroll: each word brightens in turn,
+// driven by --p (view progress). Words are split at build time; screen readers
+// get the sentence once via the visually-hidden copy.
+const text =
+  'Most money apps ask for your attention. Poyshik asks for three seconds a day, then does the counting, the comparing and the remembering for you. So you simply know where every taka went.';
+const emphasis = new Set(['three', 'seconds', 'every', 'taka']);
+const words = text.split(' ');
+---
+
+<section class="manifesto" aria-label="Why Poyshik">
+  <div class="container">
+    <p class="sr-only">{text}</p>
+    <p
+      class="manifesto__text"
+      data-progress="view"
+      style={`--n:${words.length}`}
+      aria-hidden="true"
+    >
+      {words.map((w, i) => (
+        <span
+          class:list={['w', { 'w--em': emphasis.has(w.replace(/[^a-z]/gi, '').toLowerCase()) }]}
+          style={`--i:${i}`}
+        >
+          {w}{' '}
+        </span>
+      ))}
+    </p>
+  </div>
+</section>
+
+<style>
+  .manifesto {
+    padding: clamp(96px, 16vw, 200px) 0;
+  }
+  .manifesto__text {
+    --p: 0;
+    margin: 0 auto;
+    max-width: 20em;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.6vw, 3.9rem);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .w {
+    /* Reveal window: --p from ~0.2 (entering) to ~0.62 (centre of screen). */
+    --t: calc((var(--p) - 0.2) / 0.42);
+    opacity: clamp(0.13, calc(var(--t) * var(--n) - var(--i) + 1), 1);
+    transition: opacity 0.15s linear;
+  }
+  .w--em {
+    font-style: italic;
+    color: var(--forest);
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+</style>

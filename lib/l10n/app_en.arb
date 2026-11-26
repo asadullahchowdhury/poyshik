@@ -35,6 +35,10 @@
   "accountsTitle": "Accounts",
   "accountsTotalBalance": "Total balance",
   "accountsArchived": "Archived",
+  "accountsCount": "{count, plural, =1{Across 1 account} other{Across {count} accounts}}",
+  "@accountsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "accountsAdd": "Add account",
   "accountNew": "New account",
   "accountEdit": "Edit account",
@@ -111,6 +115,11 @@
   "insightsHighlights": "Highlights",
   "insightsDayByDay": "Day by day",
   "insightsByCategory": "By category",
+  "insightsDailyAverage": "Daily average {amount}",
+  "@insightsDailyAverage": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "insightsBiggestDay": "Biggest day",
   "insightsEmptyPeriod": "Nothing logged in this period.",
   "insightTopCategory": "{category} was {percent}% of your spending.",
   "@insightTopCategory": {
@@ -238,6 +247,9 @@
     "placeholders": { "percent": { "type": "int" } }
   },
   "homeSameAsLastMonth": "Same pace as last month",
+  "homeGreetingMorning": "Good morning",
+  "homeGreetingAfternoon": "Good afternoon",
+  "homeGreetingEvening": "Good evening",
   "homeIncome": "Income",
   "homeNet": "Net",
   "homeToday": "Today",

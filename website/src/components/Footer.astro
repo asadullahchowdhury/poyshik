@@ -1,0 +1,246 @@
+---
+import logo from '../assets/brand/poyshik-logo-dark.svg?raw';
+import wordmark from '../assets/brand/poyshik-wordmark-on-dark.svg?raw';
+import { site } from '../config/site';
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+const { creator } = site;
+// Brush signature (from Rahat's portfolio), used as a mask so it can take the
+// Poyshik marigold. Swap the file to change it.
+const signatureUrl = `${base}brand/rahat-signature.webp`;
+---
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <a href={base} class="footer__logo" aria-label="Poyshik home" set:html={logo} />
+      <p>{site.tagline}</p>
+    </div>
+    <nav aria-label="Footer">
+      <ul>
+        <li>
+          <a href={`${base}#features`}>Features</a>
+        </li>
+        <li>
+          <a href={`${base}#insights`}>Insights</a>
+        </li>
+        <li>
+          <a href={`${base}#privacy`}>Privacy &amp; offline</a>
+        </li>
+        <li>
+          <a href={`${base}privacy/`}>Privacy policy</a>
+        </li>
+        <li>
+          <a href={`${base}terms/`}>Terms</a>
+        </li>
+        {site.contactEmail && (
+          <li>
+            <a href={`mailto:${site.contactEmail}`}>Contact</a>
+          </li>
+        )}
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Maker credit -->
+  <div class="container footer__maker">
+    <span class="footer__maker-label">Designed &amp; built by</span>
+    <span class="sr-only">{creator.name}</span>
+    <span
+      class="footer__signature"
+      data-reveal
+      aria-hidden="true"
+      style={`--sig:url('${signatureUrl}')`}
+    >
+      <span class="footer__ink"></span>
+      <span class="footer__tip"></span>
+    </span>
+  </div>
+
+  <!-- Giant wordmark rises as the page ends -->
+  <div
+    class="footer__giant"
+    data-progress="view"
+    data-static="1"
+    aria-hidden="true"
+    set:html={wordmark}
+  />
+
+  <div class="container footer__legal">
+    <p>
+      © {site.year} {site.name}. All rights reserved.
+    </p>
+    <p>App screens on this page show demo data.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--forest-night);
+    color: var(--on-forest-muted);
+    padding: 88px 0 32px;
+    overflow: hidden;
+    position: relative;
+  }
+  .footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .footer__logo {
+    display: block;
+    height: 34px;
+  }
+  .footer__logo :global(svg) {
+    height: 100%;
+    width: auto;
+  }
+  .footer__brand p {
+    margin: 14px 0 0;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--on-forest);
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, auto));
+    gap: 10px 40px;
+  }
+  a {
+    text-decoration: none;
+  }
+  nav a:hover {
+    color: var(--on-forest);
+  }
+
+  .footer__maker {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 64px;
+  }
+  .footer__maker-label {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  /* The signature shape masks a warm marigold gradient, tilted like a sign-off. */
+  .footer__signature {
+    position: relative;
+    display: block;
+    width: clamp(150px, 18vw, 200px);
+    aspect-ratio: 480 / 260;
+    rotate: -4deg;
+    /* Override the generic fade-in: the signature writes itself instead. */
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .footer__ink {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      #f6e3b8 0%,
+      var(--marigold-light) 55%,
+      var(--marigold) 100%
+    );
+    filter: drop-shadow(0 0 12px rgba(233, 176, 78, 0.25));
+    -webkit-mask: var(--sig) left center / contain no-repeat;
+    mask: var(--sig) left center / contain no-repeat;
+  }
+  .footer__tip {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 56px;
+    height: 56px;
+    margin: -28px 0 0 -28px;
+    border-radius: 50%;
+    background: radial-gradient(
+      closest-side,
+      rgba(255, 240, 210, 0.6),
+      rgba(233, 176, 78, 0.2) 45%,
+      transparent
+    );
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* Write-on: ink revealed left to right while a pen tip rides the edge. */
+  :global(.js) .footer__ink {
+    clip-path: inset(-10% 100% -10% 0);
+  }
+  :global(.js) .footer__signature:global(.is-visible) .footer__ink {
+    animation: sign-ink 1.5s cubic-bezier(0.45, 0, 0.55, 1) 0.2s forwards;
+  }
+  :global(.js) .footer__signature:global(.is-visible) .footer__tip {
+    animation: sign-tip 1.5s cubic-bezier(0.45, 0, 0.55, 1) 0.2s forwards;
+  }
+  @keyframes sign-ink {
+    to {
+      clip-path: inset(-10% 0 -10% 0);
+    }
+  }
+  @keyframes sign-tip {
+    0% {
+      left: 0;
+      opacity: 1;
+    }
+    85% {
+      opacity: 1;
+    }
+    100% {
+      left: 100%;
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .footer__ink {
+      clip-path: none;
+      animation: none !important;
+    }
+    .footer__tip {
+      display: none;
+    }
+  }
+
+  .footer__giant {
+    --p: 0;
+    margin: 40px auto 0;
+    padding: 0 var(--gutter);
+    max-width: calc(var(--max) + 2 * var(--gutter));
+    opacity: calc(0.05 + var(--p) * 0.07);
+    transform: translateY(calc((1 - var(--p)) * 30%));
+  }
+  .footer__giant :global(svg) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .footer__legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(244, 238, 226, 0.1);
+    font-size: 0.85rem;
+  }
+  .footer__legal p {
+    margin: 0;
+  }
+</style>

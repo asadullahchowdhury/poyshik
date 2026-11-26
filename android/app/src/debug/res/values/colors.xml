@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- "Poyshik Dev" gets inverted icon colors so it's easy to tell apart
-         from the real app on the home screen. -->
-    <color name="icon_bg">#F2A93B</color>
-    <color name="icon_mark">#121417</color>
+    <!-- "Poyshik Dev" uses the inverted icon (cream tile, forest P) so it's
+         easy to tell apart from the real app. Matches poyshik-app-icon-dev.svg. -->
+    <color name="icon_bg">#FBF8F1</color>
+    <color name="icon_p">#123D2E</color>
+    <color name="icon_leaf">#E2A13B</color>
 </resources>

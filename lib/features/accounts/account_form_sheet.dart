@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,6 +8,7 @@ import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/palette_picker.dart';
+import '../../core/widgets/pill_chip.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
@@ -143,7 +144,7 @@ class _AccountFormSheetState extends ConsumerState<_AccountFormSheet> {
                   runSpacing: Space.sm,
                   children: [
                     for (final p in accountPresets)
-                      _Chip(
+                      PillChip(
                         label: p.$1,
                         selected: _name.text == p.$1 && _type == p.$2,
                         onTap: () => _applyPreset(p),
@@ -175,7 +176,7 @@ class _AccountFormSheetState extends ConsumerState<_AccountFormSheet> {
                 runSpacing: Space.sm,
                 children: [
                   for (final t in AccountType.values)
-                    _Chip(
+                    PillChip(
                       label: t.label(l10n),
                       icon: AppIcons.of(iconForAccountType(t)),
                       selected: _type == t,
@@ -236,50 +237,6 @@ class _AccountFormSheetState extends ConsumerState<_AccountFormSheet> {
                   style: AppType.caption.copyWith(color: c.inkMuted),
                 ),
               ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    this.icon,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final fg = selected ? c.onInk : c.ink;
-    return Material(
-      color: selected ? c.ink : c.surfaceRaised,
-      borderRadius: BorderRadius.circular(Radii.pill),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Radii.pill),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Space.md + 2,
-            vertical: Space.sm,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16, color: fg),
-                const SizedBox(width: Space.xs + 2),
-              ],
-              Text(label, style: AppType.label.copyWith(color: fg)),
             ],
           ),
         ),

@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-/// Poyshik's color tokens, available via `context.colors`.
+/// Poyshik's colour tokens, available via `context.colors`.
 ///
-/// Concept: neutral "paper" backgrounds, ink-black primary actions and a
-/// marigold accent used sparingly. Money colors are calm, never alarming.
+/// Brand: warm paper backgrounds, deep forest ink, one marigold accent.
+/// Money colours are calm, never alarming. See docs/BRAND_GUIDELINES.md.
 @immutable
 class PoyshikColors extends ThemeExtension<PoyshikColors> {
   const PoyshikColors({
@@ -15,24 +15,30 @@ class PoyshikColors extends ThemeExtension<PoyshikColors> {
     required this.inkSubtle,
     required this.onInk,
     required this.hairline,
+    required this.brand,
+    required this.onBrand,
+    required this.hero,
+    required this.onHero,
+    required this.onHeroMuted,
     required this.accent,
     required this.onAccent,
     required this.expense,
     required this.income,
     required this.transfer,
     required this.warning,
+    required this.shadow,
   });
 
-  /// Screen background.
+  /// Screen background ("paper").
   final Color background;
 
-  /// Cards and sheets.
+  /// Cards and sheets ("cream").
   final Color surface;
 
   /// Inset elements on a surface: keypad keys, chips, progress tracks.
   final Color surfaceRaised;
 
-  /// Primary text and primary buttons.
+  /// Primary text (green-black, never pure black).
   final Color ink;
 
   /// Secondary text.
@@ -47,10 +53,17 @@ class PoyshikColors extends ThemeExtension<PoyshikColors> {
   /// 1px borders and dividers.
   final Color hairline;
 
-  /// Marigold. Use sparingly: the add button, focus, one chart highlight.
-  final Color accent;
+  /// Primary actions and selected states (forest).
+  final Color brand;
+  final Color onBrand;
 
-  /// Text and icons drawn on [accent].
+  /// Feature surfaces such as the dashboard hero card (deep forest).
+  final Color hero;
+  final Color onHero;
+  final Color onHeroMuted;
+
+  /// Marigold. The one accent: add button, focus, one highlight per view.
+  final Color accent;
   final Color onAccent;
 
   final Color expense;
@@ -60,55 +73,72 @@ class PoyshikColors extends ThemeExtension<PoyshikColors> {
   /// Over budget and other gentle warnings.
   final Color warning;
 
+  /// The single soft shadow used for floating elements.
+  final Color shadow;
+
   static const light = PoyshikColors(
-    background: Color(0xFFF7F7F4),
-    surface: Color(0xFFFFFFFF),
-    surfaceRaised: Color(0xFFF1F0EC),
-    ink: Color(0xFF121417),
-    inkMuted: Color(0xFF5F636B),
-    inkSubtle: Color(0xFF9A9DA3),
-    onInk: Color(0xFFFFFFFF),
-    hairline: Color(0xFFE7E5DF),
-    accent: Color(0xFFF2A93B),
-    onAccent: Color(0xFF1C1405),
-    expense: Color(0xFFD9604A),
-    income: Color(0xFF3E8E6A),
-    transfer: Color(0xFF5B6B8C),
-    warning: Color(0xFFC2410C),
+    background: Color(0xFFF4EEE2),
+    surface: Color(0xFFFCFAF5),
+    surfaceRaised: Color(0xFFEDE6D8),
+    ink: Color(0xFF17201B),
+    inkMuted: Color(0xFF5C665E),
+    inkSubtle: Color(0xFF98A097),
+    onInk: Color(0xFFFBF8F1),
+    hairline: Color(0xFFE3DBCB),
+    brand: Color(0xFF123D2E),
+    onBrand: Color(0xFFFBF8F1),
+    hero: Color(0xFF123D2E),
+    onHero: Color(0xFFFBF8F1),
+    onHeroMuted: Color(0xFFB7C8BD),
+    accent: Color(0xFFE2A13B),
+    onAccent: Color(0xFF2A1C05),
+    expense: Color(0xFFC2553F),
+    income: Color(0xFF2F7D5B),
+    transfer: Color(0xFF5D6E8C),
+    warning: Color(0xFFB8621B),
+    shadow: Color(0x1F0B2A20),
   );
 
   static const dark = PoyshikColors(
-    background: Color(0xFF0F1012),
-    surface: Color(0xFF17191C),
-    surfaceRaised: Color(0xFF212328),
-    ink: Color(0xFFF3F2EE),
-    inkMuted: Color(0xFFA3A6AC),
-    inkSubtle: Color(0xFF6E7178),
-    onInk: Color(0xFF0F1012),
-    hairline: Color(0xFF272A2F),
-    accent: Color(0xFFF5B451),
-    onAccent: Color(0xFF1C1405),
-    expense: Color(0xFFEC7A64),
+    background: Color(0xFF0C1713),
+    surface: Color(0xFF13211A),
+    surfaceRaised: Color(0xFF1C2D24),
+    ink: Color(0xFFF1ECE1),
+    inkMuted: Color(0xFFA9B2A8),
+    inkSubtle: Color(0xFF6E7A71),
+    onInk: Color(0xFF0C1713),
+    hairline: Color(0xFF233629),
+    brand: Color(0xFFE9E1CF),
+    onBrand: Color(0xFF0C1713),
+    hero: Color(0xFF173F30),
+    onHero: Color(0xFFF1ECE1),
+    onHeroMuted: Color(0xFF9DB5A6),
+    accent: Color(0xFFE9B04E),
+    onAccent: Color(0xFF2A1C05),
+    expense: Color(0xFFE07A63),
     income: Color(0xFF5DB08B),
     transfer: Color(0xFF8C9BBD),
-    warning: Color(0xFFFB923C),
+    warning: Color(0xFFF0954A),
+    shadow: Color(0x66000000),
   );
 
-  /// Muted tones for categories and charts; chosen to sit well together in
-  /// both themes. Tiles use the color at ~14% opacity behind a full icon.
+  /// Earthy, muted tones for categories and charts; chosen to sit with the
+  /// forest/paper palette in both themes. Stored as indexes, so the order is
+  /// stable: 0 apricot, 1 mustard, 2 sage, 3 teal, 4 blue, 5 lavender,
+  /// 6 rose, 7 coral, 8 taupe, 9 sky, 10 olive, 11 slate.
   static const categoryPalette = <Color>[
-    Color(0xFFE58E5A), // apricot
-    Color(0xFFE0B04A), // mustard
-    Color(0xFF7FB77E), // leaf
-    Color(0xFF4FA3A5), // teal
-    Color(0xFF5B8DD6), // cornflower
-    Color(0xFF8C7AE6), // lavender
-    Color(0xFFD47AA6), // orchid
-    Color(0xFFE06C75), // rose
-    Color(0xFF9C8A6E), // taupe
-    Color(0xFF6FA8DC), // sky
-    Color(0xFFB5A642), // olive
-    Color(0xFF8E9AAF), // slate
+    Color(0xFFD9895B),
+    Color(0xFFD3A445),
+    Color(0xFF6E9E72),
+    Color(0xFF3F918A),
+    Color(0xFF5B82BF),
+    Color(0xFF8775C2),
+    Color(0xFFC46A8B),
+    Color(0xFFD2665A),
+    Color(0xFF9A876B),
+    Color(0xFF6A9FCB),
+    Color(0xFFA2993F),
+    Color(0xFF8090A6),
   ];
 
   @override
@@ -121,12 +151,18 @@ class PoyshikColors extends ThemeExtension<PoyshikColors> {
     Color? inkSubtle,
     Color? onInk,
     Color? hairline,
+    Color? brand,
+    Color? onBrand,
+    Color? hero,
+    Color? onHero,
+    Color? onHeroMuted,
     Color? accent,
     Color? onAccent,
     Color? expense,
     Color? income,
     Color? transfer,
     Color? warning,
+    Color? shadow,
   }) {
     return PoyshikColors(
       background: background ?? this.background,
@@ -137,12 +173,18 @@ class PoyshikColors extends ThemeExtension<PoyshikColors> {
       inkSubtle: inkSubtle ?? this.inkSubtle,
       onInk: onInk ?? this.onInk,
       hairline: hairline ?? this.hairline,
+      brand: brand ?? this.brand,
+      onBrand: onBrand ?? this.onBrand,
+      hero: hero ?? this.hero,
+      onHero: onHero ?? this.onHero,
+      onHeroMuted: onHeroMuted ?? this.onHeroMuted,
       accent: accent ?? this.accent,
       onAccent: onAccent ?? this.onAccent,
       expense: expense ?? this.expense,
       income: income ?? this.income,
       transfer: transfer ?? this.transfer,
       warning: warning ?? this.warning,
+      shadow: shadow ?? this.shadow,
     );
   }
 
@@ -159,12 +201,18 @@ class PoyshikColors extends ThemeExtension<PoyshikColors> {
       inkSubtle: mix(inkSubtle, other.inkSubtle),
       onInk: mix(onInk, other.onInk),
       hairline: mix(hairline, other.hairline),
+      brand: mix(brand, other.brand),
+      onBrand: mix(onBrand, other.onBrand),
+      hero: mix(hero, other.hero),
+      onHero: mix(onHero, other.onHero),
+      onHeroMuted: mix(onHeroMuted, other.onHeroMuted),
       accent: mix(accent, other.accent),
       onAccent: mix(onAccent, other.onAccent),
       expense: mix(expense, other.expense),
       income: mix(income, other.income),
       transfer: mix(transfer, other.transfer),
       warning: mix(warning, other.warning),
+      shadow: mix(shadow, other.shadow),
     );
   }
 }

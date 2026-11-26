@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/motion.dart';
 import '../../features/transactions/add_transaction_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/theme.dart';
@@ -122,7 +123,7 @@ class _TabItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final color = selected ? c.ink : c.inkSubtle;
+    final color = selected ? c.brand : c.inkSubtle;
     return Semantics(
       selected: selected,
       button: true,
@@ -132,16 +133,29 @@ class _TabItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 150),
-              child: Icon(
-                selected ? selectedIcon : icon,
-                key: ValueKey(selected),
-                color: color,
-                size: 24,
+            // A soft pill grows behind the active icon.
+            AnimatedContainer(
+              duration: Motion.base,
+              curve: Motion.curve,
+              width: selected ? 52 : 32,
+              height: 28,
+              decoration: BoxDecoration(
+                color: selected
+                    ? c.brand.withValues(alpha: 0.10)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(Radii.pill),
+              ),
+              child: AnimatedSwitcher(
+                duration: Motion.fast,
+                child: Icon(
+                  selected ? selectedIcon : icon,
+                  key: ValueKey(selected),
+                  color: color,
+                  size: 22,
+                ),
               ),
             ),
-            const SizedBox(height: Space.xs),
+            const SizedBox(height: Space.xxs + 1),
             Text(
               label,
               style: AppType.caption.copyWith(
@@ -167,16 +181,32 @@ class _AddButton extends StatelessWidget {
     final c = context.colors;
     return Tooltip(
       message: label,
-      child: Material(
-        color: c.accent,
-        borderRadius: BorderRadius.circular(Radii.md + 2),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(Radii.md + 2),
-          child: SizedBox(
-            width: 52,
-            height: 44,
-            child: Icon(Icons.add_rounded, color: c.onAccent, size: 28),
+      child: Pressable(
+        scale: 0.94,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Radii.md + 2),
+            boxShadow: [
+              BoxShadow(
+                color: c.accent.withValues(alpha: 0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: Material(
+            color: c.accent,
+            borderRadius: BorderRadius.circular(Radii.md + 2),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(Radii.md + 2),
+              child: SizedBox(
+                width: 54,
+                height: 44,
+                child: Icon(Icons.add_rounded, color: c.onAccent, size: 28),
+              ),
+            ),
           ),
         ),
       ),

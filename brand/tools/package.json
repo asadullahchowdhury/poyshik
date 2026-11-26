@@ -1,0 +1,13 @@
+{
+  "name": "poyshik-brand-tools",
+  "private": true,
+  "type": "module",
+  "description": "Generates Poyshik brand SVGs (symbol, wordmark outlines, lockups, icons) from one source.",
+  "scripts": {
+    "build": "node build-brand.mjs"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "opentype.js": "1.3.4"
+  }
+}

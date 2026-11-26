@@ -1,0 +1,179 @@
+// Renders real Poyshik screens with DEMO data into PNGs (for review and the
+// landing page). Not part of the normal test suite.
+//
+//   flutter test screenshots --update-goldens
+//
+// Output: screenshots/out/*.png (1200×2600, 3× a 400×866 logical phone).
+import 'dart:io';
+
+import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:poyshik/app/app.dart';
+import 'package:poyshik/core/dates/clock.dart';
+import 'package:poyshik/data/db/app_database.dart';
+import 'package:poyshik/data/settings_repository.dart';
+import 'package:poyshik/features/accounts/accounts_repository.dart';
+import 'package:poyshik/features/budgets/budget_repository.dart';
+import 'package:poyshik/features/categories/categories_repository.dart';
+import 'package:poyshik/features/home/summary_repository.dart';
+import 'package:poyshik/features/onboarding/onboarding_service.dart';
+import 'package:poyshik/features/transactions/transactions_repository.dart';
+
+import 'demo_data.dart';
+
+Future<void> _loadFont(String family, List<String> paths) async {
+  final loader = FontLoader(family);
+  for (final p in paths) {
+    final bytes = File(p).readAsBytesSync();
+    loader.addFont(Future.value(ByteData.view(bytes.buffer)));
+  }
+  await loader.load();
+}
+
+Future<void> _loadFonts() async {
+  await _loadFont('Geist', [
+    for (final w in ['Regular', 'Medium', 'SemiBold', 'Bold'])
+      'assets/fonts/geist/Geist-$w.ttf',
+  ]);
+  await _loadFont('PoyshikTaka', ['assets/fonts/taka/PoyshikTaka.ttf']);
+  await _loadFont('InstrumentSerif', [
+    'assets/fonts/instrument_serif/InstrumentSerif-Regular.ttf',
+  ]);
+  final flutterRoot = Platform.environment['FLUTTER_ROOT'] ?? r'D:\dev\flutter';
+  await _loadFont('MaterialIcons', [
+    '$flutterRoot/bin/cache/artifacts/material_fonts/materialicons-regular.otf',
+  ]);
+}
+
+/// The entry sheet asks the repository for the default account; answer with
+/// the demo Cash account instead of touching a database.
+class _DemoTransactionsRepository extends TransactionsRepository {
+  _DemoTransactionsRepository(AppDatabase db)
+    : super(db, SettingsRepository(db));
+
+  @override
+  Future<String?> defaultAccountId() async => 'cash';
+}
+
+Widget _app({bool dark = false, bool firstLaunch = false}) => ProviderScope(
+  overrides: [
+    transactionsRepositoryProvider.overrideWithValue(
+      _DemoTransactionsRepository(AppDatabase(NativeDatabase.memory())),
+    ),
+    clockProvider.overrideWithValue(() => demoNow),
+    initialSettingsProvider.overrideWithValue({
+      SettingKeys.themeMode: dark ? 'dark' : 'light',
+    }),
+    startupNeedsOnboardingProvider.overrideWithValue(firstLaunch),
+    transactionViewsProvider.overrideWith((ref) => Stream.value(demoViews)),
+    filteredViewsProvider.overrideWith((ref) => Stream.value(demoViews)),
+    activeAccountsProvider.overrideWith(
+      (ref) => Stream.value(demoAccountsWithBalances()),
+    ),
+    archivedAccountsProvider.overrideWith((ref) => Stream.value(const [])),
+    overallBudgetProvider.overrideWith((ref) => Stream.value(demoBudget)),
+    periodTotalProvider.overrideWith((ref, q) => Stream.value(demoTotal(q))),
+    topCategoriesProvider.overrideWith(
+      (ref, r) => Stream.value(demoCategoryTotals(r, limit: 4)),
+    ),
+    categoryTotalsProvider.overrideWith(
+      (ref, r) => Stream.value(demoCategoryTotals(r)),
+    ),
+    expenseEntriesProvider.overrideWith(
+      (ref, r) => Stream.value(demoEntries(r)),
+    ),
+    categoriesByUsageProvider.overrideWith(
+      (ref, k) => Stream.value(demoCategoriesByUsage(k)),
+    ),
+    categoryListProvider.overrideWith(
+      (ref, q) => Stream.value(
+        demoCategories.where((c) => c.kind == q.kind && !q.archived).toList(),
+      ),
+    ),
+  ],
+  child: const PoyshikApp(),
+);
+
+Future<void> _phone(WidgetTester tester) async {
+  tester.view
+    ..physicalSize = const Size(1200, 2598)
+    ..devicePixelRatio = 3
+    ..padding = const FakeViewPadding(top: 120, bottom: 60)
+    ..viewPadding = const FakeViewPadding(top: 120, bottom: 60);
+  addTearDown(tester.view.reset);
+}
+
+Future<void> _shot(WidgetTester tester, String name) async {
+  await tester.pumpAndSettle(const Duration(milliseconds: 100));
+  await expectLater(
+    find.byType(PoyshikApp),
+    matchesGoldenFile('out/$name.png'),
+  );
+}
+
+Future<void> _tapText(WidgetTester tester, String text) async {
+  await tester.tap(find.text(text).last);
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  setUpAll(_loadFonts);
+
+  for (final dark in [false, true]) {
+    final suffix = dark ? 'dark' : 'light';
+
+    testWidgets('home $suffix', (tester) async {
+      await _phone(tester);
+      await tester.pumpWidget(_app(dark: dark));
+      await _shot(tester, 'home_$suffix');
+    });
+
+    testWidgets('activity $suffix', (tester) async {
+      await _phone(tester);
+      await tester.pumpWidget(_app(dark: dark));
+      await tester.pumpAndSettle();
+      await _tapText(tester, 'Activity');
+      await _shot(tester, 'activity_$suffix');
+    });
+
+    testWidgets('insights $suffix', (tester) async {
+      await _phone(tester);
+      await tester.pumpWidget(_app(dark: dark));
+      await tester.pumpAndSettle();
+      await _tapText(tester, 'Insights');
+      await _shot(tester, 'insights_$suffix');
+    });
+
+    testWidgets('add expense $suffix', (tester) async {
+      await _phone(tester);
+      await tester.pumpWidget(_app(dark: dark));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Add transaction'));
+      await tester.pumpAndSettle();
+      for (final k in ['3', '2', '0']) {
+        await tester.tap(find.text(k).last);
+        await tester.pump();
+      }
+      await tester.tap(find.text('Food').first);
+      await _shot(tester, 'add_$suffix');
+    });
+  }
+
+  testWidgets('accounts light', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    await _tapText(tester, 'More');
+    await _tapText(tester, 'Accounts');
+    await _shot(tester, 'accounts_light');
+  });
+
+  testWidgets('welcome light', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_app(firstLaunch: true));
+    await _shot(tester, 'welcome_light');
+  });
+}

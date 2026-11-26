@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:poyshik/app/app.dart';
 import 'package:poyshik/core/money/money.dart';
 import 'package:poyshik/features/accounts/accounts_repository.dart';
@@ -43,6 +44,12 @@ void main() {
   ) async {
     await _pumpApp(tester);
 
+    // The prompt sits below the hero card; scroll to it like a user would.
+    await tester.scrollUntilVisible(
+      find.text('Log your first expense'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Log your first expense'), findsOneWidget);
     for (final tab in ['Home', 'Activity', 'Insights', 'More']) {
       expect(find.text(tab), findsWidgets);

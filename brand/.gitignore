@@ -1,0 +1,5 @@
+tools/node_modules/
+# Source fonts downloaded by make-taka-font.mjs (only the 1.8 KB subset ships).
+tools/_src/
+# Scratch previews used while designing.
+_work/

@@ -10,10 +10,12 @@ import '../../core/dates/week_start_provider.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/amount_text.dart';
+import '../../core/widgets/animated_amount.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/balance_text.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
@@ -79,16 +81,21 @@ class InsightsScreen extends ConsumerWidget {
               ),
             )
           else ...[
-            _SummaryCard(spent: spent, income: income),
-            if (insights.isNotEmpty) ...[
-              const SizedBox(height: Space.md),
-              _HighlightsCard(insights: insights, kind: period.kind),
-            ],
-            const SizedBox(height: Space.md),
-            _DailyBarsCard(daily: daily, kind: period.kind, now: now),
-            if (categories.isNotEmpty) ...[
-              const SizedBox(height: Space.md),
-              _CategoryDonutCard(categories: categories, spent: spent),
+            // Keyed by period so cards re-reveal when switching periods.
+            for (final (i, card) in [
+              _SummaryCard(spent: spent, income: income),
+              if (insights.isNotEmpty)
+                _HighlightsCard(insights: insights, kind: period.kind),
+              _DailyBarsCard(daily: daily, kind: period.kind, now: now),
+              if (categories.isNotEmpty)
+                _CategoryDonutCard(categories: categories, spent: spent),
+            ].indexed) ...[
+              if (i > 0) const SizedBox(height: Space.md),
+              Reveal(
+                key: ValueKey('${period.kind}${period.offset}-$i'),
+                index: i,
+                child: card,
+              ),
             ],
           ],
         ],
@@ -120,22 +127,25 @@ class _PeriodBar extends ConsumerWidget {
     final notifier = ref.read(insightsPeriodProvider.notifier);
     return Column(
       children: [
-        SegmentedButton<PeriodKind>(
-          showSelectedIcon: false,
-          segments: [
-            ButtonSegment(
-              value: PeriodKind.week,
-              label: Text(l10n.insightsWeek),
-            ),
-            ButtonSegment(
-              value: PeriodKind.month,
-              label: Text(l10n.insightsMonth),
-            ),
-          ],
-          selected: {period.kind},
-          onSelectionChanged: (s) => notifier.setKind(s.first),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<PeriodKind>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: PeriodKind.week,
+                label: Text(l10n.insightsWeek),
+              ),
+              ButtonSegment(
+                value: PeriodKind.month,
+                label: Text(l10n.insightsMonth),
+              ),
+            ],
+            selected: {period.kind},
+            onSelectionChanged: (s) => notifier.setKind(s.first),
+          ),
         ),
-        const SizedBox(height: Space.sm),
+        const SizedBox(height: Space.md),
         Row(
           children: [
             IconButton(
@@ -143,10 +153,14 @@ class _PeriodBar extends ConsumerWidget {
               icon: const Icon(Icons.chevron_left_rounded),
             ),
             Expanded(
-              child: Text(
-                _label(),
-                textAlign: TextAlign.center,
-                style: AppType.titleMedium.copyWith(color: c.ink),
+              child: AnimatedSwitcher(
+                duration: Motion.base,
+                child: Text(
+                  _label(),
+                  key: ValueKey(_label()),
+                  textAlign: TextAlign.center,
+                  style: AppType.displaySmall.copyWith(color: c.ink),
+                ),
               ),
             ),
             IconButton(
@@ -188,14 +202,14 @@ class _SummaryCard extends StatelessWidget {
             style: AppType.overline.copyWith(color: c.inkMuted),
           ),
           const SizedBox(height: Space.sm),
-          AmountText(spent, size: AmountSize.large),
+          AnimatedAmountText(spent, size: AmountSize.large),
           const SizedBox(height: Space.lg),
           Row(
             children: [
               Expanded(
                 child: figure(
                   l10n.homeIncome,
-                  AmountText(income, tone: AmountTone.income),
+                  AnimatedAmountText(income, tone: AmountTone.income),
                 ),
               ),
               Expanded(
@@ -294,6 +308,13 @@ class _DailyBarsCard extends StatelessWidget {
       (m, d) => d.$2.minor > m ? d.$2.minor : m,
     );
     final isWeek = kind == PeriodKind.week;
+    final scale = barScale([for (final d in daily) d.$2]);
+    // Average over days so far (future days in the current period are 0).
+    final today = dateOnly(now);
+    final elapsed = daily.where((d) => !d.$1.isAfter(today)).toList();
+    final average = elapsed.isEmpty
+        ? 0.0
+        : elapsed.fold<int>(0, (s, d) => s + d.$2.minor) / elapsed.length;
 
     return PoyshikCard(
       child: Column(
@@ -305,76 +326,130 @@ class _DailyBarsCard extends StatelessWidget {
           ),
           const SizedBox(height: Space.xl),
           SizedBox(
-            height: 160,
-            child: BarChart(
-              BarChartData(
-                maxY: maxValue == 0 ? 1 : maxValue * 1.15,
-                gridData: const FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                alignment: BarChartAlignment.spaceBetween,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) => c.ink,
-                    tooltipBorderRadius: BorderRadius.circular(Radii.sm),
-                    getTooltipItem: (group, _, rod, _) => BarTooltipItem(
-                      '${DateFormat('d MMM').format(daily[group.x].$1)}\n'
-                      '${MoneyFormat.formatWhole(daily[group.x].$2)}',
-                      AppType.caption.copyWith(color: c.onInk),
-                    ),
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(),
-                  rightTitles: const AxisTitles(),
-                  topTitles: const AxisTitles(),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 24,
-                      getTitlesWidget: (value, meta) {
-                        final i = value.toInt();
-                        final day = daily[i].$1;
-                        final show = isWeek || day.day == 1 || day.day % 7 == 1;
-                        if (!show) return const SizedBox.shrink();
-                        return SideTitleWidget(
-                          meta: meta,
-                          child: Text(
-                            isWeek
-                                ? DateFormat.E().format(day).substring(0, 2)
-                                : '${day.day}',
-                            style: AppType.caption.copyWith(color: c.inkSubtle),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                barGroups: [
-                  for (var i = 0; i < daily.length; i++)
-                    BarChartGroupData(
-                      x: i,
-                      barRods: [
-                        BarChartRodData(
-                          toY: daily[i].$2.minor.toDouble(),
-                          width: isWeek ? 22 : 6,
-                          color: daily[i].$2.minor == maxValue && maxValue > 0
-                              ? c.accent
-                              : dateOnly(daily[i].$1) == dateOnly(now)
-                              ? c.ink
-                              : c.ink.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(isWeek ? 6 : 3),
-                          backDrawRodData: BackgroundBarChartRodData(
-                            show: true,
-                            toY: maxValue == 0 ? 1 : maxValue * 1.15,
-                            color: c.surfaceRaised,
-                          ),
+            height: 170,
+            child: TweenAnimationBuilder<double>(
+              // Bars grow from the baseline once, when the card appears.
+              tween: Tween(begin: 0, end: 1),
+              duration: Motion.reduced(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 700),
+              curve: Motion.curve,
+              builder: (context, grow, _) => BarChart(
+                duration: Motion.base,
+                BarChartData(
+                  maxY: scale.maxY,
+                  gridData: const FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  extraLinesData: ExtraLinesData(
+                    horizontalLines: [
+                      if (average > 0)
+                        HorizontalLine(
+                          y: average,
+                          color: c.inkSubtle.withValues(alpha: 0.6),
+                          strokeWidth: 1,
+                          dashArray: const [4, 4],
                         ),
-                      ],
+                    ],
+                  ),
+                  alignment: BarChartAlignment.spaceBetween,
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => c.ink,
+                      tooltipBorderRadius: BorderRadius.circular(Radii.sm),
+                      getTooltipItem: (group, _, rod, _) => BarTooltipItem(
+                        '${DateFormat('d MMM').format(daily[group.x].$1)}\n'
+                        '${MoneyFormat.formatWhole(daily[group.x].$2)}',
+                        AppType.caption.copyWith(color: c.onInk),
+                      ),
                     ),
-                ],
+                  ),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(),
+                    rightTitles: const AxisTitles(),
+                    topTitles: const AxisTitles(),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 24,
+                        getTitlesWidget: (value, meta) {
+                          final i = value.toInt();
+                          final day = daily[i].$1;
+                          final show =
+                              isWeek || day.day == 1 || day.day % 7 == 1;
+                          if (!show) return const SizedBox.shrink();
+                          return SideTitleWidget(
+                            meta: meta,
+                            child: Text(
+                              isWeek
+                                  ? DateFormat.E().format(day).substring(0, 2)
+                                  : '${day.day}',
+                              style: AppType.caption.copyWith(
+                                color: c.inkSubtle,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  barGroups: [
+                    for (var i = 0; i < daily.length; i++)
+                      BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY:
+                                grow *
+                                (daily[i].$2.minor.toDouble() > scale.cap
+                                    ? scale.cap
+                                    : daily[i].$2.minor.toDouble()),
+                            width: isWeek ? 22 : 7,
+                            color: daily[i].$2.minor == maxValue && maxValue > 0
+                                ? c.accent
+                                : dateOnly(daily[i].$1) == dateOnly(now)
+                                ? c.brand
+                                : c.brand.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(isWeek ? 6 : 4),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
+          if (average > 0) ...[
+            const SizedBox(height: Space.md),
+            Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  child: Divider(color: c.inkSubtle, thickness: 1),
+                ),
+                const SizedBox(width: Space.sm),
+                Text(
+                  l10n.insightsDailyAverage(
+                    MoneyFormat.formatWhole(Money(average.round())),
+                  ),
+                  style: AppType.caption.copyWith(color: c.inkMuted),
+                ),
+                const Spacer(),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(width: Space.sm),
+                Text(
+                  l10n.insightsBiggestDay,
+                  style: AppType.caption.copyWith(color: c.inkMuted),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -418,6 +493,7 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
               alignment: Alignment.center,
               children: [
                 PieChart(
+                  duration: Motion.base,
                   PieChartData(
                     centerSpaceRadius: 64,
                     sectionsSpace: 2,

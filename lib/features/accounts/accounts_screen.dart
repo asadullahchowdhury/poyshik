@@ -6,11 +6,14 @@ import 'package:material_ui/material_ui.dart';
 import '../../app/theme/theme.dart';
 import '../../core/money/money.dart';
 import '../../core/widgets/amount_text.dart';
+import '../../core/widgets/animated_amount.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/balance_text.dart';
 import '../../core/widgets/category_icon.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/state_views.dart';
 import '../../l10n/app_localizations.dart';
 import 'account_form_sheet.dart';
 import 'account_labels.dart';
@@ -30,8 +33,8 @@ class AccountsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.accountsTitle)),
       body: active.when(
-        loading: () => const SizedBox.shrink(),
-        error: (e, _) => Center(child: Text('$e')),
+        loading: () => const LoadingView(),
+        error: (e, _) => ErrorView(error: e),
         data: (accounts) => ListView(
           padding: const EdgeInsets.fromLTRB(
             Space.screen,
@@ -40,22 +43,41 @@ class AccountsScreen extends ConsumerWidget {
             Space.huge,
           ),
           children: [
-            PoyshikCard(
-              padding: const EdgeInsets.all(Space.xxl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.accountsTotalBalance.toUpperCase(),
-                    style: AppType.overline.copyWith(color: c.inkMuted),
-                  ),
-                  const SizedBox(height: Space.sm),
-                  BalanceText(total, size: AmountSize.hero),
-                ],
+            Reveal(
+              child: PoyshikCard(
+                color: c.hero,
+                bordered: false,
+                elevated: true,
+                radius: Radii.xl,
+                padding: const EdgeInsets.all(Space.xxl),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.accountsTotalBalance.toUpperCase(),
+                      style: AppType.overline.copyWith(color: c.onHeroMuted),
+                    ),
+                    const SizedBox(height: Space.sm),
+                    AnimatedAmountText(
+                      total.abs(),
+                      size: AmountSize.hero,
+                      showSign: total.isNegative,
+                      tone: total.isNegative
+                          ? AmountTone.expense
+                          : AmountTone.neutral,
+                      color: c.onHero,
+                    ),
+                    const SizedBox(height: Space.xs),
+                    Text(
+                      l10n.accountsCount(accounts.length),
+                      style: AppType.label.copyWith(color: c.onHeroMuted),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: Space.lg),
-            _AccountGroup(items: accounts),
+            Reveal(index: 1, child: _AccountGroup(items: accounts)),
             const SizedBox(height: Space.xl),
             PrimaryButton(
               label: l10n.accountsAdd,

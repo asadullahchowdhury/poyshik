@@ -10,7 +10,9 @@ import '../../core/dates/periods.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
+import '../../core/widgets/state_views.dart';
 import '../../l10n/app_localizations.dart';
 import 'activity_filter_bar.dart';
 import 'add_transaction_sheet.dart';
@@ -37,8 +39,8 @@ class ActivityScreen extends ConsumerWidget {
           if (hasAny || filter.isActive) const ActivityFilterBar(),
           Expanded(
             child: views.when(
-              loading: () => const SizedBox.shrink(),
-              error: (e, _) => Center(child: Text('$e')),
+              loading: () => const LoadingView(),
+              error: (e, _) => ErrorView(error: e),
               data: (list) {
                 if (list.isEmpty) {
                   return filter.isActive
@@ -86,9 +88,16 @@ class ActivityScreen extends ConsumerWidget {
                         ),
                       );
                     }
-                    return _DaySection(
-                      group: groups[i - (filter.isActive ? 1 : 0)],
-                    );
+                    final group = groups[i - (filter.isActive ? 1 : 0)];
+                    // Only the first screenful staggers in; later groups
+                    // appear immediately while scrolling.
+                    return i < 6
+                        ? Reveal(
+                            key: ValueKey(group.day),
+                            index: i,
+                            child: _DaySection(group: group),
+                          )
+                        : _DaySection(group: group);
                   },
                 );
               },

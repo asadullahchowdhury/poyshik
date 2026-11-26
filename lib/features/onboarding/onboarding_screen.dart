@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +10,8 @@ import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/category_icon.dart';
+import '../../core/widgets/motion.dart';
+import '../../core/widgets/poyshik_logo.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
@@ -121,7 +123,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: i <= _page
-                              ? context.colors.ink
+                              ? context.colors.brand
                               : context.colors.hairline,
                           borderRadius: BorderRadius.circular(Radii.pill),
                         ),
@@ -214,7 +216,7 @@ class _WelcomePage extends StatelessWidget {
               color: c.surfaceRaised,
               borderRadius: BorderRadius.circular(Radii.md),
             ),
-            child: Icon(icon, size: 20, color: c.ink),
+            child: Icon(icon, size: 20, color: c.brand),
           ),
           const SizedBox(width: Space.lg),
           Expanded(
@@ -233,35 +235,39 @@ class _WelcomePage extends StatelessWidget {
         ),
       ],
       children: [
-        // ListView stretches children to full width; Align keeps the tile 64px.
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: c.accent,
-              borderRadius: BorderRadius.circular(Radii.lg),
-            ),
-            child: Center(
-              child: Text(
-                '৳',
-                style: AppType.amountLarge.copyWith(color: c.onAccent),
-              ),
-            ),
+        // ListView stretches children to full width; Align keeps the mark's size.
+        const Reveal(
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: PoyshikSymbol(height: 84),
           ),
         ),
         const SizedBox(height: Space.xxl),
-        Text(l10n.appTitle, style: AppType.amountHero.copyWith(color: c.ink)),
-        const SizedBox(height: Space.sm),
-        Text(
-          l10n.welcomeTitle,
-          style: AppType.titleLarge.copyWith(color: c.inkMuted),
+        Reveal(
+          index: 1,
+          child: Text(
+            l10n.appTitle,
+            style: AppType.display.copyWith(fontSize: 64, color: c.brand),
+          ),
+        ),
+        const SizedBox(height: Space.xs),
+        Reveal(
+          index: 2,
+          child: Text(
+            l10n.welcomeTitle,
+            style: AppType.displaySmall.copyWith(color: c.inkMuted),
+          ),
         ),
         const SizedBox(height: Space.huge),
-        line(Icons.bolt_rounded, l10n.welcomeLine1),
-        line(Icons.donut_large_rounded, l10n.welcomeLine2),
-        line(Icons.lock_outline_rounded, l10n.welcomeLine3),
+        Reveal(index: 3, child: line(Icons.bolt_rounded, l10n.welcomeLine1)),
+        Reveal(
+          index: 4,
+          child: line(Icons.donut_large_rounded, l10n.welcomeLine2),
+        ),
+        Reveal(
+          index: 5,
+          child: line(Icons.lock_outline_rounded, l10n.welcomeLine3),
+        ),
       ],
     );
   }
@@ -310,7 +316,7 @@ class _AccountsPage extends StatelessWidget {
                 color: c.surface,
                 borderRadius: BorderRadius.circular(Radii.lg),
                 border: Border.all(
-                  color: choice.on ? c.ink : c.hairline,
+                  color: choice.on ? c.brand : c.hairline,
                   width: choice.on ? 1.5 : 1,
                 ),
               ),

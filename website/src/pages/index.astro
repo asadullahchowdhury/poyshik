@@ -1,0 +1,1271 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Phone from '../components/Phone.astro';
+import Dolly from '../components/Dolly.astro';
+import Manifesto from '../components/Manifesto.astro';
+import DownloadButton from '../components/DownloadButton.astro';
+import { Image } from 'astro:assets';
+import { site, downloadAvailable } from '../config/site';
+import symbol from '../assets/brand/poyshik-symbol-on-dark.svg?raw';
+
+import homeLight from '../assets/screens/home_light.png';
+import homeDark from '../assets/screens/home_dark.png';
+import addLight from '../assets/screens/add_light.png';
+import addDark from '../assets/screens/add_dark.png';
+import activityLight from '../assets/screens/activity_light.png';
+import activityDark from '../assets/screens/activity_dark.png';
+import insightsLight from '../assets/screens/insights_light.png';
+import insightsDark from '../assets/screens/insights_dark.png';
+
+const screens = [
+  {
+    id: 'home',
+    label: 'Home',
+    light: homeLight,
+    dark: homeDark,
+    alt: 'Poyshik Home: this month’s spending, budget progress, safe-to-spend per day, accounts.',
+    caption:
+      'Your month at a glance: spending against last month, budget progress and what’s safe to spend today.',
+  },
+  {
+    id: 'add',
+    label: 'Add',
+    light: addLight,
+    dark: addDark,
+    alt: 'Poyshik quick entry: amount keypad, categories, account and date.',
+    caption: 'Quick entry: amount, category, save. Your most-used categories come first.',
+  },
+  {
+    id: 'activity',
+    label: 'Activity',
+    light: activityLight,
+    dark: activityDark,
+    alt: 'Poyshik Activity: transactions grouped by day with search and filters.',
+    caption: 'Every entry grouped by day, with search across notes, categories and amounts.',
+  },
+  {
+    id: 'insights',
+    label: 'Insights',
+    light: insightsLight,
+    dark: insightsDark,
+    alt: 'Poyshik Insights: monthly summary, highlights and a day-by-day spending chart.',
+    caption: 'Week or month views, plain-language highlights, and a day-by-day chart.',
+  },
+];
+
+// Illustrative bars for the insights section (demo data, same shape as the app's chart).
+const bars = [
+  22, 30, 18, 46, 40, 24, 33, 26, 52, 38, 20, 34, 44, 29, 100, 31, 27, 42, 36, 23, 48, 30, 25, 39,
+  28, 21,
+];
+const biggest = bars.indexOf(Math.max(...bars));
+---
+
+<Base>
+  <Header />
+  <main id="main">
+    <!-- 1 · Hero ------------------------------------------------------------>
+    <section class="hero">
+      <div class="container hero__grid">
+        <div class="hero__copy">
+          <p class="eyebrow" data-reveal>
+            Personal expense tracker · {site.platform}
+          </p>
+          <h1 class="display h1" data-reveal style="--d:1">
+            Where did your taka go?
+            <br />
+            <span class="italic-accent">Now you know.</span>
+          </h1>
+          <p class="lede" data-reveal style="--d:2">
+            Poyshik makes logging a day’s spending take seconds, then shows you what it adds up to:
+            where your money went, how this month compares, and what’s safe to spend today.
+          </p>
+          <div class="hero__ctas" data-reveal style="--d:3">
+            <DownloadButton />
+            <a class="btn btn-ghost" href="#how">
+              See how it works
+            </a>
+          </div>
+          <ul class="hero__facts" data-reveal style="--d:4">
+            <li>No account</li>
+            <li>Works offline</li>
+            <li>Data stays on your phone</li>
+          </ul>
+        </div>
+
+        <div class="hero__stage" aria-hidden="false">
+          <div class="hero__glow" aria-hidden="true"></div>
+          <div class="hero__back" data-parallax="0.05">
+            <Phone
+              src={insightsDark}
+              alt="Poyshik Insights screen in dark mode."
+              width={260}
+              eager
+            />
+          </div>
+          <div class="hero__front float" data-parallax="0.1">
+            <Phone
+              src={homeLight}
+              alt="Poyshik Home screen showing spending this month and the daily safe-to-spend amount."
+              width={300}
+              eager
+            />
+          </div>
+          <div class="chip chip--a" data-parallax="0.18" aria-hidden="true">
+            <span class="chip__label">Safe to spend</span>
+            <span class="amount tabular">
+              <span class="sym">৳</span>1,918<small>/day</small>
+            </span>
+          </div>
+          <div class="chip chip--b" data-parallax="0.14" aria-hidden="true">
+            <span class="chip__check">✓</span>
+            Expense saved ·{' '}
+            <span class="amount tabular">
+              <span class="sym">৳</span>320
+            </span>
+          </div>
+          <div class="chip chip--c" data-parallax="0.22" aria-hidden="true">
+            <span class="chip__trend">↘</span> 13% less than last month
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statement that reveals word by word as you scroll -->
+    <Manifesto />
+
+    <!-- Scroll-scrubbed dolly shot of the Home screen -->
+    <Dolly />
+
+    <!-- 2 · Workflow ----------------------------------------------------------->
+    <section class="section workflow" id="how">
+      <div class="container workflow__grid">
+        <div class="workflow__phone" data-reveal>
+          <Phone src={addLight} alt="Adding a ৳320 Food expense in Poyshik." width={300} />
+        </div>
+        <div>
+          <p class="eyebrow" data-reveal>
+            How it works
+          </p>
+          <h2 class="display h2" data-reveal style="--d:1">
+            Amount. Category.
+            <br />
+            <span class="italic-accent">Done.</span>
+          </h2>
+          <p class="lede" data-reveal style="--d:2">
+            Logging is the habit, so Poyshik makes it nearly effortless. The account you used last
+            and today’s date are already filled in.
+          </p>
+          <ol class="steps">
+            <li data-reveal style="--d:3">
+              <span class="steps__n">1</span>
+              <div>
+                <h3>Tap +</h3>
+                <p>The entry sheet opens over any screen, with a keypad built for amounts.</p>
+              </div>
+            </li>
+            <li data-reveal style="--d:4">
+              <span class="steps__n">2</span>
+              <div>
+                <h3>Type the amount, pick a category</h3>
+                <p>
+                  Categories you use most sit up front. Add a note or another date only if you want.
+                </p>
+              </div>
+            </li>
+            <li data-reveal style="--d:5">
+              <span class="steps__n">3</span>
+              <div>
+                <h3>Save, and watch the month update</h3>
+                <p>
+                  Balances, budget and insights refresh instantly. Made a mistake? Undo is one tap.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Showcase ------------------------------------------------------------>
+    <section class="section showcase" data-showcase>
+      <div class="container">
+        <div class="showcase__head">
+          <div>
+            <p class="eyebrow" data-reveal>
+              Inside the app
+            </p>
+            <h2 class="display h2" data-reveal style="--d:1">
+              Calm by design.
+            </h2>
+          </div>
+          <div class="showcase__controls" data-reveal style="--d:2">
+            <div class="tabs" role="tablist" aria-label="App screens">
+              <span class="tabs__indicator" aria-hidden="true"></span>
+              {screens.map((s, i) => (
+                <button
+                  type="button"
+                  role="tab"
+                  id={`tab-${s.id}`}
+                  data-tab={s.id}
+                  aria-selected={i === 0 ? 'true' : 'false'}
+                  aria-controls="showcase-panel"
+                  tabindex={i === 0 ? 0 : -1}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" />
+              </svg>
+              <span>Light</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="showcase__stage" id="showcase-panel" role="tabpanel" data-reveal style="--d:2">
+          <div class="showcase__phone">
+            <!-- One frame; only the screen inside changes, like swiping in the app. -->
+            <Phone width={320}>
+              {screens.map((s, i) => (
+                <>
+                  <div
+                    class:list={['screen', { 'is-active': i === 0 }]}
+                    data-screen={s.id}
+                    data-theme="light"
+                    aria-hidden={i === 0 ? 'false' : 'true'}
+                  >
+                    <Image
+                      src={s.light}
+                      alt={s.alt}
+                      widths={[360, 540, 720, 1080]}
+                      sizes="(max-width: 600px) 70vw, 320px"
+                      format="webp"
+                      quality={82}
+                    />
+                  </div>
+                  <div class="screen" data-screen={s.id} data-theme="dark" aria-hidden="true">
+                    <Image
+                      src={s.dark}
+                      alt={`${s.alt} Dark mode.`}
+                      widths={[360, 540, 720, 1080]}
+                      sizes="(max-width: 600px) 70vw, 320px"
+                      format="webp"
+                      quality={82}
+                    />
+                  </div>
+                </>
+              ))}
+            </Phone>
+          </div>
+          <div class="showcase__captions">
+            <div class="captions" aria-live="polite">
+              {screens.map((s, i) => (
+                <p
+                  data-caption={s.id}
+                  class:list={{ 'is-active': i === 0 }}
+                  aria-hidden={i === 0 ? 'false' : 'true'}
+                >
+                  {s.caption}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · Features -------------------------------------------------------------->
+    <section class="section features" id="features">
+      <div class="container">
+        <p class="eyebrow" data-reveal>
+          Features
+        </p>
+        <h2 class="display h2" data-reveal style="--d:1">
+          Everything a daily
+          <br />
+          money habit needs.
+        </h2>
+        <div class="bento">
+          <article class="tile tile--wide" data-reveal>
+            <div class="mini-accounts" aria-hidden="true">
+              <span class="acc">
+                <i style="--c:#6E9E72"></i>Cash
+              </span>
+              <span class="acc">
+                <i style="--c:#C46A8B"></i>bKash
+              </span>
+              <span class="acc">
+                <i style="--c:#D9895B"></i>Nagad
+              </span>
+              <span class="acc">
+                <i style="--c:#8775C2"></i>Rocket
+              </span>
+              <span class="acc">
+                <i style="--c:#5B82BF"></i>Bank
+              </span>
+            </div>
+            <h3 class="display h3">All your money, every wallet</h3>
+            <p>
+              Cash, bank, bKash, Nagad, Rocket and cards, each with a live balance. Move money
+              between them with transfers that never count as spending.
+            </p>
+          </article>
+          <article class="tile tile--forest" data-reveal style="--d:1">
+            <div class="mini-budget" aria-hidden="true">
+              <div class="mini-budget__bar">
+                <span></span>
+              </div>
+              <div class="mini-budget__row">
+                <span>Safe to spend</span>
+                <b class="tabular">
+                  <span class="sym">৳</span>1,918/day
+                </b>
+              </div>
+            </div>
+            <h3 class="display h3">A budget that talks in days</h3>
+            <p>
+              Set one monthly budget. Poyshik turns what’s left into a daily amount you can safely
+              spend.
+            </p>
+          </article>
+          <article class="tile" data-reveal style="--d:2">
+            <div class="mini-search" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M10 3a7 7 0 0 1 5.6 11.2l4.6 4.6-1.4 1.4-4.6-4.6A7 7 0 1 1 10 3Zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"
+                />
+              </svg>
+              rickshaw
+            </div>
+            <h3 class="display h3">Find anything fast</h3>
+            <p>Search notes, categories and amounts. Filter by type, account, category or month.</p>
+          </article>
+          <article class="tile" data-reveal style="--d:3">
+            <div class="mini-cats" aria-hidden="true">
+              {['#D9895B', '#3F918A', '#5B82BF', '#C46A8B', '#D3A445', '#8775C2'].map((c) => (
+                <i style={`--c:${c}`} />
+              ))}
+            </div>
+            <h3 class="display h3">Categories your way</h3>
+            <p>
+              Sixteen sensible defaults to start. Add your own (Rickshaw, Tea, Bazaar), pick from 40
+              icons, reorder, archive.
+            </p>
+          </article>
+          <article class="tile" data-reveal style="--d:4">
+            <div class="mini-file" aria-hidden="true">
+              <span>poyshik-backup.json</span>
+              <span>transactions.csv</span>
+            </div>
+            <h3 class="display h3">Backup &amp; export</h3>
+            <p>
+              Save a backup file wherever you like and restore it any time. Export every transaction
+              to CSV for a spreadsheet.
+            </p>
+          </article>
+          <article class="tile tile--banner" data-reveal style="--d:5">
+            <div class="tile--banner__text">
+              <h3 class="display h3">Light &amp; dark</h3>
+              <p>
+                Follows your phone, or choose. Weeks can start on Saturday, Sunday or Monday, and
+                the whole app follows.
+              </p>
+            </div>
+            <div class="theme-pair" aria-hidden="true">
+              <Image src={homeLight} alt="" widths={[240, 480]} sizes="200px" format="webp" />
+              <Image src={homeDark} alt="" widths={[240, 480]} sizes="200px" format="webp" />
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · Insights ------------------------------------------------------------>
+    <section class="section section-forest insights" id="insights">
+      <div class="container insights__grid">
+        <div>
+          <p class="eyebrow" data-reveal>
+            Spending insights
+          </p>
+          <h2 class="display h2" data-reveal style="--d:1">
+            See the shape
+            <br />
+            of <span class="italic-accent">your month.</span>
+          </h2>
+          <p class="lede" data-reveal style="--d:2">
+            Switch between this week and this month, step back through past periods, and read what
+            changed in plain words. No spreadsheets required.
+          </p>
+          <div class="chart" data-reveal style="--d:3">
+            <div class="chart__head">
+              <span>Day by day</span>
+            </div>
+            <div
+              class="chart__bars"
+              role="img"
+              aria-label="Illustrative bar chart of daily spending for a month, with one unusually large day highlighted."
+            >
+              {bars.map((h, i) => (
+                <span
+                  class:list={[
+                    'bar',
+                    { 'bar--hi': i === biggest, 'bar--today': i === bars.length - 1 },
+                  ]}
+                  style={`--h:${h}%; --i:${i}`}
+                />
+              ))}
+              <span class="chart__avg" aria-hidden="true"></span>
+            </div>
+            <ul class="chart__notes">
+              <li>
+                <b>Rent</b> was 40% of your spending.
+              </li>
+              <li>
+                <b>13% less</b> than last month by today.
+              </li>
+              <li>
+                About{' '}
+                <b class="tabular">
+                  <span class="sym">৳</span>1,747
+                </b>{' '}
+                a day on average.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="insights__phone" data-reveal style="--d:2" data-parallax="0.06">
+          <Phone
+            src={insightsDark}
+            alt="Poyshik Insights in dark mode: highlights and a day-by-day spending chart."
+            width={310}
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 · Privacy & offline ------------------------------------------------------>
+    <section class="section privacy" id="privacy">
+      <div class="container privacy__grid">
+        <div>
+          <p class="eyebrow" data-reveal>
+            Privacy &amp; offline
+          </p>
+          <h2 class="display h2" data-reveal style="--d:1">
+            Your money is
+            <br />
+            <span class="italic-accent">your business.</span>
+          </h2>
+        </div>
+        <ul class="facts">
+          <li data-reveal style="--d:1">
+            <h3>No sign-up</h3>
+            <p>There’s no account to create. Open the app, add your wallets, start logging.</p>
+          </li>
+          <li data-reveal style="--d:2">
+            <h3>On your phone</h3>
+            <p>
+              Your records are stored in a database on your device, not on our servers. Poyshik
+              works fully offline.
+            </p>
+          </li>
+          <li data-reveal style="--d:3">
+            <h3>Backups you control</h3>
+            <p>
+              A backup is a file you create and keep: Drive, Telegram, email, wherever you choose.
+              Restore it any time.
+            </p>
+          </li>
+          <li data-reveal style="--d:4">
+            <h3>No ads, no analytics</h3>
+            <p>
+              The app shows no ads and doesn’t track how you use it. One thing to know: uninstalling
+              deletes your data, so keep a backup.
+            </p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 7 · CTA ---------------------------------------------------------------->
+    <section class="cta" id="download">
+      <div class="container">
+        <div class="cta__panel" data-reveal>
+          <div class="cta__mark" set:html={symbol} aria-hidden="true" />
+          <h2 class="display h2">Start keeping every taka in sight.</h2>
+          <p class="lede">
+            {downloadAvailable
+              ? `Poyshik is free to download for ${site.platform}.`
+              : `Poyshik for ${site.platform} is in its final polish. The download will appear here when it’s published.`}
+          </p>
+          <div class="cta__actions">
+            <DownloadButton variant="accent" />
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  /* Hero */
+  .hero {
+    padding: clamp(32px, 6vw, 72px) 0 clamp(72px, 10vw, 128px);
+    overflow: hidden;
+    /* Soft brand light: a marigold glow behind the phones, forest at the edge. */
+    background:
+      radial-gradient(42% 55% at 78% 42%, rgba(226, 161, 59, 0.13), transparent 70%),
+      radial-gradient(60% 60% at 100% 0%, rgba(18, 61, 46, 0.08), transparent 70%), var(--paper);
+    margin-top: -72px;
+    padding-top: calc(72px + clamp(32px, 6vw, 72px));
+  }
+  .hero__grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: clamp(32px, 5vw, 72px);
+    align-items: center;
+  }
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 36px;
+  }
+  .hero__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    list-style: none;
+    padding: 0;
+    margin: 28px 0 0;
+    font-size: 0.92rem;
+    color: var(--ink-muted);
+  }
+  .hero__facts li::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--marigold);
+    margin-right: 9px;
+    vertical-align: middle;
+  }
+  .hero__stage {
+    position: relative;
+    height: clamp(560px, 62vw, 720px);
+  }
+  .hero__glow {
+    position: absolute;
+    inset: 8% 0 0 8%;
+    background: radial-gradient(closest-side, rgba(18, 61, 46, 0.16), transparent 70%);
+    filter: blur(8px);
+  }
+  .hero__back,
+  .hero__front {
+    position: absolute;
+    transform: translateY(var(--parallax, 0));
+    will-change: transform;
+  }
+  .hero__back {
+    right: 2%;
+    top: 4%;
+    rotate: 6deg;
+    opacity: 0.95;
+  }
+  .hero__front {
+    left: 6%;
+    top: 9%;
+    rotate: -3deg;
+  }
+  .float :global(.phone) {
+    animation: float 7s ease-in-out infinite;
+  }
+  @keyframes float {
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  .chip {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: var(--cream);
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow-soft);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transform: translateY(var(--parallax, 0));
+    z-index: 3;
+  }
+  .chip--a {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    left: -4%;
+    top: 58%;
+    background: var(--forest);
+    color: var(--on-forest);
+    border-color: transparent;
+  }
+  .chip--a .chip__label {
+    font-size: 0.75rem;
+    color: var(--on-forest-muted);
+  }
+  .chip--a .amount {
+    font-size: 1.35rem;
+    font-weight: 650;
+  }
+  .chip--a small {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--on-forest-muted);
+  }
+  .chip--b {
+    right: 0;
+    bottom: 10%;
+  }
+  .chip__check {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--marigold);
+    color: #2a1c05;
+    font-size: 0.75rem;
+  }
+  .chip--c {
+    right: 6%;
+    top: 0;
+    color: var(--income);
+  }
+  .chip__trend {
+    font-weight: 700;
+  }
+
+  /* Workflow */
+  .workflow__grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: clamp(40px, 7vw, 110px);
+    align-items: center;
+  }
+  .workflow__phone {
+    display: flex;
+    justify-content: center;
+  }
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 40px 0 0;
+    display: grid;
+    gap: 26px;
+  }
+  .steps li {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+  }
+  .steps__n {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: var(--forest);
+    color: var(--on-forest);
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+  }
+  .steps h3 {
+    margin: 2px 0 4px;
+    font-size: 1.05rem;
+  }
+  .steps p {
+    margin: 0;
+    color: var(--ink-muted);
+  }
+
+  /* Showcase */
+  .showcase {
+    background: linear-gradient(var(--paper), #efe7d7);
+  }
+  .showcase__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 56px;
+  }
+  .showcase__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .tabs {
+    position: relative;
+    display: inline-flex;
+    padding: 4px;
+    gap: 2px;
+    border-radius: var(--radius-md);
+    background: var(--sand);
+  }
+  /* The active pill glides and resizes between tabs (positioned by JS). */
+  .tabs__indicator {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: var(--tab-w, 0px);
+    transform: translateX(var(--tab-x, 0px));
+    border-radius: 11px;
+    background: var(--forest);
+    box-shadow: 0 6px 16px -8px rgba(11, 42, 32, 0.7);
+    transition:
+      transform 0.5s cubic-bezier(0.3, 1.25, 0.4, 1),
+      width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1);
+  }
+  .tabs button {
+    position: relative;
+    z-index: 1;
+  }
+  /* Before JS positions the pill (or without JS), the button carries it. */
+  .tabs:not(.is-ready) button[aria-selected='true'] {
+    background: var(--forest);
+  }
+  .tabs.is-ready button[aria-selected='true'] {
+    background: transparent;
+  }
+  .tabs button,
+  .theme-toggle {
+    font: 500 0.92rem/1 var(--font-ui);
+    border: 0;
+    cursor: pointer;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--ink-muted);
+    transition:
+      background-color 0.25s var(--ease),
+      color 0.25s var(--ease);
+  }
+  .tabs button[aria-selected='true'] {
+    color: var(--on-forest);
+  }
+  .tabs button:not([aria-selected='true']):hover {
+    color: var(--ink);
+  }
+  .theme-toggle {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    background: var(--cream);
+    border: 1px solid var(--hairline);
+    color: var(--ink);
+    transition:
+      background-color 0.4s var(--ease),
+      color 0.4s var(--ease),
+      border-color 0.4s var(--ease);
+  }
+  .theme-toggle svg {
+    transition: transform 0.6s cubic-bezier(0.3, 1.3, 0.4, 1);
+  }
+  .theme-toggle[aria-pressed='true'] {
+    background: var(--forest-night);
+    border-color: var(--forest-night);
+    color: var(--on-forest);
+  }
+  .theme-toggle[aria-pressed='true'] svg {
+    transform: rotate(-200deg) scale(1.08);
+  }
+  .showcase__stage {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(32px, 6vw, 96px);
+    align-items: center;
+  }
+  .showcase__phone {
+    display: grid;
+    justify-items: center;
+  }
+  /* Screens stack inside one phone frame. --dir is +1 (moving right through
+     the tabs), -1 (moving left) or 0 (light/dark change: crossfade only). */
+  .showcase__phone {
+    --dir: 1;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * 18%)) scale(0.98);
+    /* Waiting screens jump straight to the side the next one enters from;
+       only the entering and leaving screens animate. */
+    transition: none;
+    pointer-events: none;
+  }
+  .screen.is-active,
+  .screen.is-leaving {
+    transition:
+      opacity 0.5s var(--ease),
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .screen :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .screen.is-active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    z-index: 1;
+  }
+  /* The screen being replaced exits the opposite way. */
+  .screen.is-leaving {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * -14%)) scale(0.98);
+  }
+  .captions {
+    display: grid;
+  }
+  .captions p {
+    grid-area: 1 / 1;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    line-height: 1.15;
+    margin: 0;
+    max-width: 16em;
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(4px);
+    transition:
+      opacity 0.45s var(--ease),
+      transform 0.55s var(--ease),
+      filter 0.45s var(--ease);
+  }
+  .captions p.is-active {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition-delay: 0.08s;
+  }
+
+  /* Features bento */
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 56px;
+  }
+  .tile {
+    background: var(--cream);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-xl);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 260px;
+    transition:
+      transform 0.35s var(--ease),
+      box-shadow 0.35s var(--ease);
+  }
+  .tile:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-soft);
+  }
+  .tile h3 {
+    margin-top: auto;
+  }
+  .tile p {
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 0.98rem;
+  }
+  .tile--wide {
+    grid-column: span 2;
+  }
+  .tile--forest {
+    background: var(--forest);
+    color: var(--on-forest);
+    border-color: transparent;
+  }
+  .tile--forest p {
+    color: var(--on-forest-muted);
+  }
+  .mini-accounts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .acc {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px 8px 8px;
+    border-radius: 999px;
+    background: var(--paper);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .acc i {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--c) 22%, transparent);
+    box-shadow: inset 0 0 0 7px color-mix(in srgb, var(--c) 22%, transparent);
+    position: relative;
+  }
+  .acc i::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 3px;
+    background: var(--c);
+  }
+  .mini-budget__bar {
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(244, 238, 226, 0.15);
+    overflow: hidden;
+  }
+  .mini-budget__bar span {
+    display: block;
+    height: 100%;
+    width: 83%;
+    border-radius: 99px;
+    background: var(--marigold);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 1.2s var(--ease) 0.3s;
+  }
+  :global(.is-visible) .mini-budget__bar span,
+  :global(html:not(.js)) .mini-budget__bar span {
+    transform: scaleX(1);
+  }
+  .mini-budget__row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: var(--on-forest-muted);
+  }
+  .mini-budget__row b {
+    color: var(--on-forest);
+  }
+  .mini-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    align-self: flex-start;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    background: var(--paper);
+    color: var(--ink-muted);
+    font-size: 0.92rem;
+  }
+  .mini-cats {
+    display: flex;
+    gap: 8px;
+  }
+  .mini-cats i {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--c) 18%, transparent);
+    position: relative;
+  }
+  .mini-cats i::after {
+    content: '';
+    position: absolute;
+    inset: 11px;
+    border-radius: 4px;
+    background: var(--c);
+  }
+  .mini-file {
+    display: grid;
+    gap: 6px;
+    font:
+      500 0.85rem/1.2 ui-monospace,
+      'Cascadia Mono',
+      Menlo,
+      monospace;
+    color: var(--forest);
+  }
+  .mini-file span {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--paper);
+    justify-self: start;
+  }
+  .tile--banner {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 32px;
+    min-height: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+  .tile--banner__text {
+    padding-bottom: 28px;
+  }
+  .tile--banner__text p {
+    max-width: 30em;
+    margin-top: 10px;
+  }
+  .theme-pair {
+    display: flex;
+    gap: 14px;
+    height: 200px;
+    align-items: flex-end;
+  }
+  .theme-pair :global(img) {
+    width: 170px;
+    height: 200px;
+    object-fit: cover;
+    object-position: top;
+    border-radius: 18px 18px 0 0;
+    border: 1px solid var(--hairline);
+    border-bottom: 0;
+  }
+  .theme-pair :global(img + img) {
+    height: 170px;
+  }
+
+  /* Insights */
+  .insights__grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: clamp(40px, 7vw, 100px);
+    align-items: center;
+  }
+  .insights__phone {
+    display: flex;
+    justify-content: center;
+    transform: translateY(var(--parallax, 0));
+  }
+  .chart {
+    margin-top: 40px;
+    padding: 24px;
+    border-radius: var(--radius-xl);
+    background: rgba(244, 238, 226, 0.05);
+    border: 1px solid rgba(244, 238, 226, 0.1);
+  }
+  .chart__head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--on-forest-muted);
+  }
+  .chart__bars {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 150px;
+    margin-top: 20px;
+  }
+  .bar {
+    flex: 1;
+    height: var(--h);
+    border-radius: 4px;
+    background: rgba(244, 238, 226, 0.22);
+    transform-origin: bottom;
+    transform: scaleY(0.04);
+    transition: transform 0.9s var(--ease);
+    transition-delay: calc(var(--i) * 22ms);
+  }
+  .bar--hi {
+    background: var(--marigold-light);
+  }
+  .bar--today {
+    background: var(--on-forest);
+  }
+  :global(.is-visible) .bar,
+  :global(html:not(.js)) .bar {
+    transform: scaleY(1);
+  }
+  .chart__avg {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 34%;
+    border-top: 1px dashed rgba(244, 238, 226, 0.35);
+  }
+  .chart__notes {
+    list-style: none;
+    padding: 0;
+    margin: 22px 0 0;
+    display: grid;
+    gap: 8px;
+    color: var(--on-forest-muted);
+  }
+  .chart__notes li::before {
+    content: '•';
+    color: var(--marigold-light);
+    margin-right: 10px;
+  }
+  .chart__notes b {
+    color: var(--on-forest);
+    font-weight: 600;
+  }
+
+  /* Privacy */
+  .privacy__grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: clamp(40px, 7vw, 100px);
+  }
+  .facts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px 40px;
+  }
+  .facts h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .facts h3::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--forest);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--forest) 12%, transparent);
+  }
+  .facts p {
+    margin: 0;
+    color: var(--ink-muted);
+  }
+
+  /* CTA */
+  .cta {
+    padding: 0 0 clamp(88px, 12vw, 140px);
+  }
+  .cta__panel {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    padding: clamp(56px, 8vw, 96px) var(--gutter);
+    border-radius: 36px;
+    background: var(--forest);
+    color: var(--on-forest);
+  }
+  .cta__panel .lede {
+    color: var(--on-forest-muted);
+    margin-inline: auto;
+  }
+  .cta__mark {
+    width: 56px;
+    margin: 0 auto 28px;
+  }
+  .cta__mark :global(svg) {
+    width: 100%;
+    height: auto;
+  }
+  .cta__actions {
+    margin-top: 36px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Responsive */
+  @media (max-width: 960px) {
+    .hero__grid,
+    .workflow__grid,
+    .insights__grid,
+    .privacy__grid {
+      grid-template-columns: 1fr;
+    }
+    .hero__stage {
+      height: 620px;
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .workflow__phone {
+      order: 2;
+    }
+    .showcase__stage {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    .showcase__captions p {
+      margin-inline: auto;
+    }
+    .bento {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .hero__stage {
+      /* Tall enough for the whole phone; no hard crop at the section edge. */
+      height: calc(min(300px, 78vw) * 2.165 + 90px);
+      margin-top: 8px;
+    }
+    .hero__front {
+      top: 40px;
+    }
+    .chip--c {
+      display: none;
+    }
+    .hero__back {
+      display: none;
+    }
+    .hero__front {
+      left: 50%;
+      translate: -50% 0;
+    }
+    .chip--a {
+      left: 0;
+    }
+    .chip--c {
+      right: 0;
+    }
+    .bento,
+    .facts {
+      grid-template-columns: 1fr;
+    }
+    .tile--wide {
+      grid-column: auto;
+    }
+    .tile--banner {
+      grid-template-columns: 1fr;
+    }
+    .theme-pair {
+      justify-content: center;
+    }
+    .theme-pair :global(img) {
+      width: 42%;
+    }
+    .showcase__head {
+      margin-bottom: 36px;
+    }
+  }
+</style>
