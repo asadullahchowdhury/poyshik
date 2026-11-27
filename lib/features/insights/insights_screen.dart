@@ -475,9 +475,13 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final cats = widget.categories;
-    final focus = _touched == null || _touched! >= cats.length
+    final touched = _touched;
+    final focus = touched == null || touched < 0 || touched >= cats.length
         ? null
-        : cats[_touched!];
+        : cats[touched];
+    // Percentages use the categories' own sum: never zero while any are
+    // shown, and it can't disagree with the list while totals load.
+    final sum = cats.fold<int>(0, (s, t) => s + t.total.minor);
 
     return PoyshikCard(
       child: Column(
@@ -502,9 +506,14 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
                     pieTouchData: PieTouchData(
                       touchCallback: (event, response) {
                         if (!event.isInterestedForInteractions) return;
+                        // fl_chart reports -1 when the finger is in the hole
+                        // or between slices (e.g. while scrolling past).
+                        final index =
+                            response?.touchedSection?.touchedSectionIndex;
                         setState(
-                          () => _touched =
-                              response?.touchedSection?.touchedSectionIndex,
+                          () => _touched = index == null || index < 0
+                              ? null
+                              : index,
                         );
                       },
                     ),
@@ -559,7 +568,9 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
                     ),
                   ),
                   Text(
-                    '${(cats[i].total.minor * 100 / widget.spent.minor).round()}%',
+                    sum <= 0
+                        ? ''
+                        : '${(cats[i].total.minor * 100 / sum).round()}%',
                     style: AppType.caption.copyWith(color: c.inkMuted),
                   ),
                   const SizedBox(width: Space.md),
