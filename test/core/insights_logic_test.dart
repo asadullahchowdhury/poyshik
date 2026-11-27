@@ -109,7 +109,7 @@ void main() {
       );
       expect(insights, hasLength(3));
       final top = insights[0] as TopCategoryShare;
-      expect((top.categoryName, top.percent), ('Food', 40));
+      expect((top.category.name, top.percent), ('Food', 40));
       expect((insights[1] as ChangeVsPrevious).percent, 30);
       // 26 days elapsed in November so far.
       expect((insights[2] as DailyAverage).amount, const Money.taka(1000));

@@ -21,11 +21,13 @@ import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../core/widgets/poyshik_logo.dart';
 import '../../core/widgets/section_header.dart';
+import '../../core/widgets/state_views.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
 import '../budgets/budget_repository.dart';
 import '../budgets/budget_sheet.dart';
+import '../categories/category_label.dart';
 import '../transactions/add_transaction_sheet.dart';
 import '../transactions/transaction_tile.dart';
 import '../transactions/transactions_repository.dart';
@@ -40,17 +42,33 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final now = ref.watch(clockProvider)();
-    final views = ref.watch(transactionViewsProvider).value ?? const [];
+    final recent = ref.watch(recentViewsProvider);
+    final hasAny = ref.watch(hasTransactionsProvider);
+
+    // The figures below would silently read as zero if their queries
+    // failed, so a failure replaces the dashboard with an honest error.
+    final failed = <AsyncValue<Object?>>[
+      recent,
+      hasAny,
+      ref.watch(activeAccountsProvider),
+      ref.watch(overallBudgetProvider),
+    ].where((a) => a.hasError).firstOrNull;
+    if (failed != null) {
+      return Scaffold(
+        body: SafeArea(child: ErrorView(error: failed.error!)),
+      );
+    }
 
     final sections = <Widget>[
       _HeroCard(now: now),
       _TodayWeek(now: now),
       const _AccountsStrip(),
-      if (views.isEmpty)
+      // Nothing until we know, so first-run never flashes for existing users.
+      if (hasAny.value == false)
         _FirstRun(title: l10n.homeFirstTitle, message: l10n.homeFirstMessage)
-      else ...[
+      else if (hasAny.value == true) ...[
         _TopCategories(range: monthRange(now)),
-        _Recent(views: views.take(5).toList()),
+        _Recent(views: recent.value ?? const []),
       ],
     ];
 
@@ -565,6 +583,7 @@ class _TopCategories extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
     final totals = ref.watch(topCategoriesProvider(range)).value ?? const [];
+    final limits = ref.watch(categoryLimitsProvider).value ?? const {};
     if (totals.isEmpty) return const SizedBox.shrink();
     final max = totals.first.total.minor;
     final reduced = Motion.reduced(context);
@@ -584,64 +603,81 @@ class _TopCategories extends ConsumerWidget {
             children: [
               for (var i = 0; i < totals.length; i++) ...[
                 if (i > 0) const SizedBox(height: Space.lg),
-                Row(
-                  children: [
-                    CategoryIcon(
-                      icon: AppIcons.of(totals[i].category.icon),
-                      color: PoyshikColors
-                          .categoryPalette[totals[i].category.colorIndex],
-                      size: 38,
-                    ),
-                    const SizedBox(width: Space.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                // With a limit the bar measures against it, otherwise
+                // against the biggest category.
+                Builder(
+                  builder: (context) {
+                    final limit = limits[totals[i].category.id];
+                    final over = limit != null && totals[i].total > limit;
+                    final fill = limit != null
+                        ? (totals[i].total.minor / limit.minor).clamp(0.0, 1.0)
+                        : max == 0
+                        ? 0.0
+                        : totals[i].total.minor / max;
+                    final palette = PoyshikColors
+                        .categoryPalette[totals[i].category.colorIndex];
+                    return Row(
+                      children: [
+                        CategoryIcon(
+                          icon: AppIcons.of(totals[i].category.icon),
+                          color: PoyshikColors
+                              .categoryPalette[totals[i].category.colorIndex],
+                          size: 38,
+                        ),
+                        const SizedBox(width: Space.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  totals[i].category.name,
-                                  style: AppType.label.copyWith(
-                                    color: c.ink,
-                                    fontWeight: FontWeight.w600,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      totals[i].category.label(l10n),
+                                      style: AppType.label.copyWith(
+                                        color: c.ink,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  AmountText(
+                                    totals[i].total,
+                                    size: AmountSize.small,
+                                    color: over ? c.warning : null,
+                                  ),
+                                  if (limit != null)
+                                    Text(
+                                      ' ${l10n.homeOfLimit(MoneyFormat.format(limit))}',
+                                      style: AppType.caption.copyWith(
+                                        color: c.inkMuted,
+                                      ),
+                                    ),
+                                ],
                               ),
-                              AmountText(
-                                totals[i].total,
-                                size: AmountSize.small,
+                              const SizedBox(height: Space.sm),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(Radii.pill),
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: fill),
+                                  duration: reduced
+                                      ? Duration.zero
+                                      : Duration(milliseconds: 600 + i * 120),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (context, v, _) =>
+                                      LinearProgressIndicator(
+                                        value: v,
+                                        minHeight: 6,
+                                        backgroundColor: c.surfaceRaised,
+                                        color: over ? c.warning : palette,
+                                      ),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: Space.sm),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(Radii.pill),
-                            child: TweenAnimationBuilder<double>(
-                              tween: Tween(
-                                begin: 0,
-                                end: max == 0 ? 0 : totals[i].total.minor / max,
-                              ),
-                              duration: reduced
-                                  ? Duration.zero
-                                  : Duration(milliseconds: 600 + i * 120),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, v, _) =>
-                                  LinearProgressIndicator(
-                                    value: v,
-                                    minHeight: 6,
-                                    backgroundColor: c.surfaceRaised,
-                                    color:
-                                        PoyshikColors.categoryPalette[totals[i]
-                                            .category
-                                            .colorIndex],
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ],

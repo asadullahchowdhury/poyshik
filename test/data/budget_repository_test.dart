@@ -26,6 +26,32 @@ void main() {
       await repo.clearOverall();
       expect(await repo.watchOverall().first, isNull);
     });
+
+    test('category limits sit beside the overall budget', () async {
+      final cats = await db.select(db.categories).get();
+      final food = cats.firstWhere((c) => c.systemKey == 'food').id;
+      final rent = cats.firstWhere((c) => c.systemKey == 'rent').id;
+
+      await repo.setOverall(const Money.taka(20000));
+      await repo.setCategoryLimit(food, const Money.taka(5000));
+      await repo.setCategoryLimit(food, const Money.taka(6000)); // replaces
+      await repo.setCategoryLimit(rent, const Money.taka(9000));
+
+      expect(await repo.watchCategoryLimits().first, {
+        food: const Money.taka(6000),
+        rent: const Money.taka(9000),
+      });
+      expect(await repo.watchOverall().first, const Money.taka(20000));
+
+      await repo.clearCategoryLimit(food);
+      expect(await repo.watchCategoryLimits().first, {
+        rent: const Money.taka(9000),
+      });
+      // Setting or clearing the overall budget leaves limits alone.
+      await repo.setOverall(const Money.taka(21000));
+      await repo.clearOverall();
+      expect(await repo.watchCategoryLimits().first, hasLength(1));
+    });
   });
 
   group('budgetStatus', () {

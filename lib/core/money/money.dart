@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'currency.dart';
+
 /// An amount of Bangladeshi Taka stored as whole poisha (1 ৳ = 100 poisha).
 ///
 /// Never use `double` for money: binary floating point cannot represent
@@ -47,12 +49,17 @@ final class Money implements Comparable<Money> {
   @override
   int get hashCode => minor.hashCode;
 
-  /// Parses user text such as "1,250.50", "৳ 300", "০৫০" (Bangla digits).
+  /// Parses user text such as "1,250.50", "৳ 300", "Rs 300", "০৫০" (Bangla
+  /// digits).
   /// Returns null for empty, malformed, more than 2 decimals, or > [max].
   static Money? tryParse(String input) {
     var s = input.trim();
     if (s.isEmpty) return null;
-    s = _toAsciiDigits(s).replaceAll(RegExp(r'[৳,\s]'), '');
+    s = _toAsciiDigits(s);
+    for (final symbol in _symbolsLongestFirst) {
+      s = s.replaceAll(symbol, '');
+    }
+    s = s.replaceAll(RegExp(r'[,\s]'), '');
     final negative = s.startsWith('-') || s.startsWith('−');
     if (negative) s = s.substring(1);
     final match = RegExp(r'^(\d+)?(?:\.(\d{0,2}))?$').firstMatch(s);
@@ -67,6 +74,11 @@ final class Money implements Comparable<Money> {
     if (value > max) return null;
     return negative ? -value : value;
   }
+
+  /// Longest first, so "S\$" is removed before "\$".
+  static final _symbolsLongestFirst = [
+    for (final c in supportedCurrencies) c.symbol,
+  ]..sort((a, b) => b.length.compareTo(a.length));
 
   static String _toAsciiDigits(String s) {
     const bangla = '০১২৩৪৫৬৭৮৯';

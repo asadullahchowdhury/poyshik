@@ -4,7 +4,7 @@ import { defineConfig } from 'astro/config';
 // SITE_URL: the public origin, used for canonical URLs, Open Graph and the
 // sitemap-free robots.txt. BASE_PATH: set to "/<repo>" for GitHub Pages
 // project sites; leave empty for Vercel or a custom domain.
-const site = process.env.SITE_URL || 'https://poyshik.example';
+const site = process.env.SITE_URL || 'https://poyshik.vercel.app';
 const base = process.env.BASE_PATH || '/';
 
 export default defineConfig({

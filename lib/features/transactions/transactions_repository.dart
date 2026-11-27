@@ -33,6 +33,12 @@ extension TransactionFilterX on TransactionFilter {
       range != null;
 }
 
+/// Rows Activity loads at a time; scrolling near the end loads another page.
+const activityPageSize = 200;
+
+/// Totals over every entry matching a filter.
+typedef FilterSummary = ({int count, Money spent});
+
 /// The fields of an expense, income or transfer entry.
 typedef TransactionDraft = ({
   TransactionType type,
@@ -101,14 +107,29 @@ class TransactionsRepository {
   Future<void> restore(TransactionRecord row) =>
       _db.into(_db.transactions).insert(row);
 
-  /// Newest first, with account/category joined in, narrowed by [filter].
-  /// [limit] keeps the list light; paging can come later if needed.
-  Stream<List<TransactionView>> watchViews({
-    TransactionFilter filter = noFilter,
-    int limit = 500,
-  }) {
+  /// The joins every list and summary query shares: the source account,
+  /// the destination account (transfers) and the category.
+  List<Join<HasResultSet, dynamic>> _joins($AccountsTable toAccounts) => [
+    innerJoin(
+      _db.accounts,
+      _db.accounts.id.equalsExp(_db.transactions.accountId),
+    ),
+    leftOuterJoin(
+      toAccounts,
+      toAccounts.id.equalsExp(_db.transactions.toAccountId),
+    ),
+    leftOuterJoin(
+      _db.categories,
+      _db.categories.id.equalsExp(_db.transactions.categoryId),
+    ),
+  ];
+
+  /// [filter] as one SQL condition, or null for "everything".
+  Expression<bool>? _where(
+    TransactionFilter filter,
+    $AccountsTable toAccounts,
+  ) {
     final t = _db.transactions;
-    final toAccounts = _db.alias(_db.accounts, 'to_acc');
     final conditions = <Expression<bool>>[
       if (filter.type != null) t.type.equalsValue(filter.type),
       // An account matches money leaving it or (transfers) arriving in it.
@@ -122,30 +143,24 @@ class TransactionsRepository {
       ],
       ?_searchCondition(filter.query, toAccounts),
     ];
+    return conditions.isEmpty ? null : conditions.reduce((a, b) => a & b);
+  }
 
-    final query =
-        _db.select(_db.transactions).join([
-            innerJoin(
-              _db.accounts,
-              _db.accounts.id.equalsExp(_db.transactions.accountId),
-            ),
-            leftOuterJoin(
-              toAccounts,
-              toAccounts.id.equalsExp(_db.transactions.toAccountId),
-            ),
-            leftOuterJoin(
-              _db.categories,
-              _db.categories.id.equalsExp(_db.transactions.categoryId),
-            ),
-          ])
-          ..orderBy([
-            OrderingTerm.desc(_db.transactions.occurredAt),
-            OrderingTerm.desc(_db.transactions.createdAt),
-          ])
-          ..limit(limit);
-    if (conditions.isNotEmpty) {
-      query.where(conditions.reduce((a, b) => a & b));
-    }
+  /// Newest first, with account/category joined in, narrowed by [filter].
+  /// Returns at most [limit] rows; callers page by asking for a larger limit.
+  Stream<List<TransactionView>> watchViews({
+    TransactionFilter filter = noFilter,
+    int limit = activityPageSize,
+  }) {
+    final toAccounts = _db.alias(_db.accounts, 'to_acc');
+    final query = _db.select(_db.transactions).join(_joins(toAccounts))
+      ..orderBy([
+        OrderingTerm.desc(_db.transactions.occurredAt),
+        OrderingTerm.desc(_db.transactions.createdAt),
+      ])
+      ..limit(limit);
+    final where = _where(filter, toAccounts);
+    if (where != null) query.where(where);
     return query.watch().map(
       (rows) => [
         for (final r in rows)
@@ -157,6 +172,32 @@ class TransactionsRepository {
           ),
       ],
     );
+  }
+
+  /// How many entries match [filter] and what their expenses add up to,
+  /// over all matches (not just the page that is loaded).
+  Stream<FilterSummary> watchSummary(TransactionFilter filter) {
+    final toAccounts = _db.alias(_db.accounts, 'to_acc');
+    final t = _db.transactions;
+    final count = countAll();
+    final spent = t.amount.sum(
+      filter: t.type.equalsValue(TransactionType.expense),
+    );
+    final query = _db.selectOnly(t).join(_joins(toAccounts))
+      ..addColumns([count, spent]);
+    final where = _where(filter, toAccounts);
+    if (where != null) query.where(where);
+    return query.watchSingle().map(
+      (r) => (count: r.read(count) ?? 0, spent: Money(r.read(spent) ?? 0)),
+    );
+  }
+
+  /// Whether anything has been logged at all.
+  Stream<bool> watchHasAny() {
+    final count = countAll();
+    return (_db.selectOnly(
+      _db.transactions,
+    )..addColumns([count])).watchSingle().map((r) => (r.read(count) ?? 0) > 0);
   }
 
   /// Matches notes, category and account names (case-insensitive), and
@@ -221,9 +262,14 @@ final transactionsRepositoryProvider = Provider<TransactionsRepository>(
   ),
 );
 
-/// All recent transactions (Home "Recent", first-run checks).
-final transactionViewsProvider = StreamProvider<List<TransactionView>>(
-  (ref) => ref.watch(transactionsRepositoryProvider).watchViews(),
+/// The latest few entries (Home "Recent").
+final recentViewsProvider = StreamProvider<List<TransactionView>>(
+  (ref) => ref.watch(transactionsRepositoryProvider).watchViews(limit: 5),
+);
+
+/// Whether anything has been logged (first-run states).
+final hasTransactionsProvider = StreamProvider<bool>(
+  (ref) => ref.watch(transactionsRepositoryProvider).watchHasAny(),
 );
 
 /// The Activity tab's current search and filters.
@@ -240,10 +286,35 @@ final activityFilterProvider =
       ActivityFilterNotifier.new,
     );
 
-/// Activity's list: everything, or the filtered result.
+/// How many rows Activity has loaded. Starts at one page and resets to one
+/// page whenever the filter changes.
+class ActivityLimitNotifier extends Notifier<int> {
+  @override
+  int build() {
+    ref.watch(activityFilterProvider);
+    return activityPageSize;
+  }
+
+  void loadMore() => state += activityPageSize;
+}
+
+final activityLimitProvider = NotifierProvider<ActivityLimitNotifier, int>(
+  ActivityLimitNotifier.new,
+);
+
+/// Activity's list: everything, or the filtered result, one or more pages.
 final filteredViewsProvider = StreamProvider<List<TransactionView>>((ref) {
   final filter = ref.watch(activityFilterProvider);
-  return ref.watch(transactionsRepositoryProvider).watchViews(filter: filter);
+  final limit = ref.watch(activityLimitProvider);
+  return ref
+      .watch(transactionsRepositoryProvider)
+      .watchViews(filter: filter, limit: limit);
+});
+
+/// Count and spending over every match of the Activity filter.
+final filteredSummaryProvider = StreamProvider<FilterSummary>((ref) {
+  final filter = ref.watch(activityFilterProvider);
+  return ref.watch(transactionsRepositoryProvider).watchSummary(filter);
 });
 
 final categoriesByUsageProvider =

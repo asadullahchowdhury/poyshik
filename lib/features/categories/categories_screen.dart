@@ -12,6 +12,7 @@ import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import 'categories_repository.dart';
 import 'category_form_sheet.dart';
+import 'category_label.dart';
 
 class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
@@ -163,7 +164,7 @@ class _CategoryRow extends StatelessWidget {
               const SizedBox(width: Space.md),
               Expanded(
                 child: Text(
-                  category.name,
+                  category.label(AppLocalizations.of(context)),
                   style: AppType.bodyStrong.copyWith(color: c.ink),
                 ),
               ),

@@ -47,6 +47,15 @@ Future<AppDatabase> _seeded() async {
   return db;
 }
 
+/// A real backup of [db] with its accounts removed, so every transaction
+/// references a missing account.
+Future<String> _withoutAccounts(AppDatabase db) async {
+  final map =
+      jsonDecode(await BackupService(db).exportJson()) as Map<String, dynamic>;
+  (map['data'] as Map<String, dynamic>)['accounts'] = <Object>[];
+  return jsonEncode(map);
+}
+
 void main() {
   test(
     'backup → restore into a fresh database reproduces everything',
@@ -107,6 +116,15 @@ void main() {
           ],
         },
       }),
+      // Written by a newer database schema.
+      jsonEncode({
+        'format': 'poyshik-backup',
+        'version': 1,
+        'schemaVersion': db.schemaVersion + 1,
+        'data': <String, Object>{},
+      }),
+      // A transaction pointing at an account that isn't in the file.
+      await _withoutAccounts(db),
     ]) {
       await expectLater(
         service.restore(bad),

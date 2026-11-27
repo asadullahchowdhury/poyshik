@@ -19,6 +19,7 @@ import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
+import '../categories/category_label.dart';
 import '../home/summary_repository.dart';
 import 'insights_logic.dart';
 
@@ -230,8 +231,8 @@ class _HighlightsCard extends StatelessWidget {
   final PeriodKind kind;
 
   String _sentence(AppLocalizations l10n, Insight i) => switch (i) {
-    TopCategoryShare(:final categoryName, :final percent) =>
-      l10n.insightTopCategory(categoryName, percent),
+    TopCategoryShare(:final category, :final percent) =>
+      l10n.insightTopCategory(category.label(l10n), percent),
     ChangeVsPrevious(:final percent) => l10n.insightChange(
       percent.abs(),
       percent > 0 ? 'more' : 'less',
@@ -523,7 +524,7 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      focus?.category.name ?? l10n.insightsSpent,
+                      focus?.category.label(l10n) ?? l10n.insightsSpent,
                       style: AppType.caption.copyWith(color: c.inkMuted),
                     ),
                     AmountText(
@@ -550,7 +551,7 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
                   const SizedBox(width: Space.md),
                   Expanded(
                     child: Text(
-                      cats[i].category.name,
+                      cats[i].category.label(l10n),
                       style: AppType.label.copyWith(
                         color: c.ink,
                         fontWeight: FontWeight.w600,

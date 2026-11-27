@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/money/money.dart';
+import '../../core/money/money_format.dart';
 import '../../data/db/app_database.dart';
 import '../../data/db/balance_queries.dart';
 import '../../data/db/database_provider.dart';
@@ -70,6 +71,7 @@ class AccountsRepository {
             colorIndex: Value(colorIndex),
             openingBalance: Value(openingBalance.minor),
             sortOrder: Value((last ?? -1) + 1),
+            currency: Value(MoneyFormat.currency.code),
           ),
         );
   }

@@ -11,8 +11,11 @@ import '../db/database_provider.dart';
 
 /// Thrown when a file is not a Poyshik backup or can't be read.
 class BackupFormatException implements Exception {
-  const BackupFormatException(this.message);
+  const BackupFormatException(this.message, {this.isNewer = false});
   final String message;
+
+  /// The file was written by a newer Poyshik than this one.
+  final bool isNewer;
 
   @override
   String toString() => 'BackupFormatException: $message';
@@ -80,6 +83,17 @@ class BackupService {
     if (version is! int || version > formatVersion) {
       throw const BackupFormatException(
         'This backup is from a newer version of Poyshik',
+        isNewer: true,
+      );
+    }
+    // Rows are read with this build's table definitions, so a backup from a
+    // newer database schema could carry columns this build doesn't know.
+    final schemaVersion = decoded['schemaVersion'];
+    if (schemaVersion != null &&
+        (schemaVersion is! int || schemaVersion > _db.schemaVersion)) {
+      throw const BackupFormatException(
+        'This backup is from a newer version of Poyshik',
+        isNewer: true,
       );
     }
     final data = decoded['data'];
@@ -105,6 +119,7 @@ class BackupService {
       budgets: rows('budgets', Budget.fromJson),
       settings: rows('settings', AppSetting.fromJson),
     );
+    _checkReferences(parsed);
     final createdAt =
         DateTime.tryParse('${decoded['createdAt']}') ?? DateTime(1970);
     return (
@@ -116,6 +131,32 @@ class BackupService {
       ),
       parsed: parsed,
     );
+  }
+
+  /// Every reference must point at a row in the same backup, so a damaged
+  /// file is refused up front instead of failing halfway through a restore.
+  static void _checkReferences(_Parsed p) {
+    final accountIds = {for (final a in p.accounts) a.id};
+    final categoryIds = {for (final c in p.categories) c.id};
+    bool unique(Iterable<String> ids) => ids.length == ids.toSet().length;
+    if (accountIds.length != p.accounts.length ||
+        categoryIds.length != p.categories.length ||
+        !unique(p.transactions.map((t) => t.id)) ||
+        !unique(p.budgets.map((b) => b.id))) {
+      throw const BackupFormatException('Duplicate rows');
+    }
+    for (final t in p.transactions) {
+      final ok =
+          accountIds.contains(t.accountId) &&
+          (t.toAccountId == null || accountIds.contains(t.toAccountId)) &&
+          (t.categoryId == null || categoryIds.contains(t.categoryId));
+      if (!ok) throw const BackupFormatException('Broken transaction link');
+    }
+    for (final b in p.budgets) {
+      if (b.categoryId != null && !categoryIds.contains(b.categoryId)) {
+        throw const BackupFormatException('Broken budget link');
+      }
+    }
   }
 
   /// Replaces ALL data with the backup, in one transaction: if anything

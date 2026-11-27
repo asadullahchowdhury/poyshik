@@ -14,6 +14,7 @@ import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
 import '../categories/categories_repository.dart';
+import '../categories/category_label.dart';
 import 'transactions_repository.dart';
 
 /// Search field plus Type / Account / Category / Month chips for Activity.
@@ -146,7 +147,7 @@ class _ActivityFilterBarState extends ConsumerState<ActivityFilterBar> {
     final categoryName = categories
         .where((x) => x.id == f.categoryId)
         .firstOrNull
-        ?.name;
+        ?.label(l10n);
     final months = [
       for (var i = 0; i < 12; i++)
         monthRange(DateTime(now.year, now.month - i)),
@@ -238,7 +239,7 @@ class _ActivityFilterBarState extends ConsumerState<ActivityFilterBar> {
                     final r = await _pick<String>(l10n.filterCategory, [
                       (null, l10n.filterAll, null),
                       for (final x in categories)
-                        (x.id, x.name, icon(x.icon, x.colorIndex)),
+                        (x.id, x.label(l10n), icon(x.icon, x.colorIndex)),
                     ], f.categoryId);
                     if (r == null) return;
                     final cur = _f;

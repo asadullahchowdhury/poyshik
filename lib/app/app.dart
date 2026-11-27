@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../core/money/currency_provider.dart';
 import '../l10n/app_localizations.dart';
 import 'router.dart';
 import 'theme/theme.dart';
@@ -12,7 +13,13 @@ class PoyshikApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Amounts are formatted through MoneyFormat's static currency, which
+    // widgets don't depend on; re-keying the tree under the app makes every
+    // amount redraw when the currency setting changes (a rare event).
+    final currency = ref.watch(currencyProvider);
     return MaterialApp.router(
+      builder: (context, child) =>
+          KeyedSubtree(key: ValueKey(currency.code), child: child!),
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,

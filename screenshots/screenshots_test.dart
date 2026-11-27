@@ -68,13 +68,17 @@ Widget _app({bool dark = false, bool firstLaunch = false}) => ProviderScope(
       SettingKeys.themeMode: dark ? 'dark' : 'light',
     }),
     startupNeedsOnboardingProvider.overrideWithValue(firstLaunch),
-    transactionViewsProvider.overrideWith((ref) => Stream.value(demoViews)),
+    recentViewsProvider.overrideWith(
+      (ref) => Stream.value(demoViews.take(5).toList()),
+    ),
+    hasTransactionsProvider.overrideWith((ref) => Stream.value(true)),
     filteredViewsProvider.overrideWith((ref) => Stream.value(demoViews)),
     activeAccountsProvider.overrideWith(
       (ref) => Stream.value(demoAccountsWithBalances()),
     ),
     archivedAccountsProvider.overrideWith((ref) => Stream.value(const [])),
     overallBudgetProvider.overrideWith((ref) => Stream.value(demoBudget)),
+    categoryLimitsProvider.overrideWith((ref) => Stream.value(const {})),
     periodTotalProvider.overrideWith((ref, q) => Stream.value(demoTotal(q))),
     topCategoriesProvider.overrideWith(
       (ref, r) => Stream.value(demoCategoryTotals(r, limit: 4)),

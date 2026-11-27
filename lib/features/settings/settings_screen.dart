@@ -6,8 +6,10 @@ import '../../app/app_info.dart';
 import '../../app/theme/theme.dart';
 import '../../app/theme/theme_mode_provider.dart';
 import '../../core/dates/week_start_provider.dart';
+import '../../core/money/currency_provider.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../l10n/app_localizations.dart';
+import 'currency_picker.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -22,6 +24,7 @@ class SettingsScreen extends ConsumerWidget {
     final c = context.colors;
     final theme = ref.watch(themeModeProvider);
     final weekStart = ref.watch(weekStartProvider);
+    final currency = ref.watch(currencyProvider);
 
     Widget section(String title, List<Widget> children) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,6 +86,46 @@ class SettingsScreen extends ConsumerWidget {
                 onSelectionChanged: (s) =>
                     ref.read(themeModeProvider.notifier).set(s.first),
               ),
+            ),
+          ]),
+          section(l10n.settingsMoney, [
+            label(l10n.settingsCurrency),
+            Material(
+              color: c.surfaceRaised,
+              borderRadius: BorderRadius.circular(Radii.md),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(Radii.md),
+                onTap: () => showCurrencyPicker(context),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Space.lg,
+                    vertical: Space.md,
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 36,
+                        child: Text(
+                          currency.symbol,
+                          style: AppType.titleMedium.copyWith(color: c.ink),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          '${currencyName(l10n, currency)} · ${currency.code}',
+                          style: AppType.bodyStrong.copyWith(color: c.ink),
+                        ),
+                      ),
+                      Icon(Icons.expand_more_rounded, color: c.inkSubtle),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: Space.sm),
+            Text(
+              l10n.settingsCurrencyHelp,
+              style: AppType.caption.copyWith(color: c.inkMuted),
             ),
           ]),
           section(l10n.settingsCalendar, [
