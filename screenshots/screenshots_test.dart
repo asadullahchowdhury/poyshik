@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:poyshik/app/app.dart';
 import 'package:poyshik/core/dates/clock.dart';
+import 'package:poyshik/core/money/money.dart';
 import 'package:poyshik/data/db/app_database.dart';
 import 'package:poyshik/data/settings_repository.dart';
 import 'package:poyshik/features/accounts/accounts_repository.dart';
@@ -77,6 +78,14 @@ Widget _app({bool dark = false, bool firstLaunch = false}) => ProviderScope(
     ),
     hasTransactionsProvider.overrideWith((ref) => Stream.value(true)),
     filteredViewsProvider.overrideWith((ref) => Stream.value(demoViews)),
+    filteredSummaryProvider.overrideWith(
+      (ref) => Stream.value((
+        count: demoViews.length,
+        spent: demoViews
+            .where((v) => v.tx.type == TransactionType.expense)
+            .fold(Money.zero, (sum, v) => sum + Money(v.tx.amount)),
+      )),
+    ),
     activeAccountsProvider.overrideWith(
       (ref) => Stream.value(demoAccountsWithBalances()),
     ),

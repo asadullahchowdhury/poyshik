@@ -19,6 +19,7 @@ The reference board explored wallets, coins, bar charts and a **"P" with a leaf*
 |---|---|
 | `poyshik-logo-light.svg` | Primary horizontal logo on cream/light backgrounds |
 | `poyshik-logo-dark.svg` | Horizontal logo on forest/dark backgrounds |
+| `poyshik-logo-p-light.svg` / `-dark.svg` | **P + oyshik**: the symbol is the first letter. Used where the logo can move (website header and footer, app Home and welcome) |
 | `poyshik-logo-stacked-light.svg` / `-dark.svg` | Square-ish spaces (splash, social avatars, print) |
 | `poyshik-symbol.svg` / `-on-dark.svg` | Symbol alone: favicons, small UI, watermarks |
 | `poyshik-symbol-mono.svg` | One colour (`currentColor`): embossing, single-ink print |
@@ -28,6 +29,8 @@ The reference board explored wallets, coins, bar charts and a **"P" with a leaf*
 | `favicon.svg` | Browser favicon |
 
 PNG exports in `brand/png/`: Play Store icon 512 (full-bleed), 1024/512 rounded icons, maskable 512, Apple touch 180, 192, favicon 32, 1200 px logos.
+
+**P + oyshik in motion:** the P lands first, then "oyshik" slides out from behind its bowl (website header: once per page load; app: once on Home and on the welcome screen). Keep "oyshik" tight to the bowl so the symbol reads as a letter. Where the logo is small, static or seen by people who don't know the name yet (store listing, share images, print), use the full `poyshik-logo-*` lockup.
 
 **Clear space:** keep at least the height of the P's counter (≈ ⅓ of the cap height) free on every side.
 **Minimum size:** symbol 16 px; horizontal logo 96 px wide (below that, use the symbol).

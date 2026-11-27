@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
+import 'motion.dart';
 
 /// The Poyshik symbol: a P whose stem ends in a marigold leaf.
 /// Same geometry as brand/tools/build-brand.mjs (512 grid).
@@ -70,35 +73,117 @@ class _SymbolPainter extends CustomPainter {
       old.ink != ink || old.accent != accent;
 }
 
-/// Symbol + "Poyshik" wordmark, cap-aligned as in the brand lockup.
-class PoyshikLogo extends StatelessWidget {
-  const PoyshikLogo({super.key, this.size = 32, this.color});
+/// The logo: the symbol is the "P", followed by "oyshik" in the display
+/// serif, cap-aligned as in brand/svg/poyshik-logo-p-*.svg.
+///
+/// With [animate], the P settles in and "oyshik" slides out of it once, the
+/// first time the logo is shown (skipped when the OS removes animations).
+class PoyshikLogo extends StatefulWidget {
+  const PoyshikLogo({
+    super.key,
+    this.size = 32,
+    this.color,
+    this.animate = false,
+  });
 
   /// Wordmark font size; the symbol scales with it.
   final double size;
   final Color? color;
+  final bool animate;
+
+  @override
+  State<PoyshikLogo> createState() => _PoyshikLogoState();
+}
+
+class _PoyshikLogoState extends State<PoyshikLogo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+    value: widget.animate ? 0 : 1,
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c.value == 1 || _c.isAnimating) return;
+    if (Motion.reduced(context)) {
+      _c.value = 1;
+    } else {
+      unawaited(_c.forward());
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final ink = color ?? context.colors.brand;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(top: size * 0.32),
-          child: PoyshikSymbol(height: size * 1.24, ink: ink),
+    final size = widget.size;
+    final ink = widget.color ?? context.colors.brand;
+    // The P lands first, then the word unrolls from behind its bowl.
+    final mark = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0, 0.55, curve: Curves.easeOutBack),
+    );
+    final word = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.35, 1, curve: Curves.easeOutCubic),
+    );
+
+    return Semantics(
+      label: 'Poyshik',
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: size * 0.32),
+              child: FadeTransition(
+                opacity: CurvedAnimation(
+                  parent: _c,
+                  curve: const Interval(0, 0.3),
+                ),
+                child: ScaleTransition(
+                  scale: Tween(begin: 0.8, end: 1.0).animate(mark),
+                  alignment: const Alignment(0, 0.2),
+                  child: PoyshikSymbol(height: size * 1.24, ink: ink),
+                ),
+              ),
+            ),
+            // Tight to the bowl, so the symbol reads as the first letter.
+            SizedBox(width: size * 0.02),
+            AnimatedBuilder(
+              animation: word,
+              builder: (context, child) => ClipRect(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: word.value.clamp(0.0, 1.0),
+                  child: Opacity(
+                    opacity: word.value.clamp(0.0, 1.0),
+                    child: Transform.translate(
+                      offset: Offset((1 - word.value) * -size * 0.6, 0),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+              child: Text(
+                'oyshik',
+                style: AppType.display.copyWith(
+                  fontSize: size,
+                  color: ink,
+                  height: 1,
+                ),
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: size * 0.3),
-        Text(
-          'Poyshik',
-          style: AppType.display.copyWith(
-            fontSize: size,
-            color: ink,
-            height: 1,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

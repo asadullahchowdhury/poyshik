@@ -114,7 +114,7 @@ class _Header extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const PoyshikLogo(size: 22),
+        const PoyshikLogo(size: 22, animate: true),
         const SizedBox(height: Space.xl),
         Text('$greeting.', style: AppType.display.copyWith(color: c.ink)),
         const SizedBox(height: Space.xs),

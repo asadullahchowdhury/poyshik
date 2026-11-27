@@ -1,5 +1,7 @@
 ---
-import logo from '../assets/brand/poyshik-logo-light.svg?raw';
+// The P symbol doubles as the first letter: P + "oyshik". On load the word
+// slides out of the P, and the full logo stays while the page scrolls.
+import logo from '../assets/brand/poyshik-logo-p-light.svg?raw';
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const links = [
   { href: `${base}#how`, label: 'How it works' },
@@ -55,6 +57,41 @@ const links = [
   .header__logo :global(svg) {
     height: 100%;
     width: auto;
+    overflow: visible;
+  }
+  .header__logo :global(.logo-mark),
+  .header__logo :global(.logo-word) {
+    transform-box: fill-box;
+  }
+  .header__logo :global(.logo-mark) {
+    transform-origin: 50% 60%;
+  }
+  .header__logo :global(.logo-word) {
+    transform-origin: 0 50%;
+  }
+
+  /* Intro, once per page load. "backwards" applies the start state during
+     the delay; afterwards the full logo simply stays. */
+  @media (prefers-reduced-motion: no-preference) {
+    .header__logo :global(.logo-mark) {
+      animation: logo-mark-in 0.7s var(--ease) 0.1s backwards;
+    }
+    .header__logo :global(.logo-word) {
+      animation: logo-word-in 0.9s var(--ease) 0.5s backwards;
+    }
+  }
+  @keyframes logo-mark-in {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+  }
+  @keyframes logo-word-in {
+    from {
+      clip-path: inset(0 100% 0 0);
+      transform: translateX(-18%);
+      opacity: 0;
+    }
   }
   nav {
     margin-left: auto;

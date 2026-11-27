@@ -47,16 +47,16 @@ const font = opentype.loadSync(
 const capHeight = font.tables.os2.sCapHeight; // font units
 const TRACKING = -0.012; // em, slightly tight for display
 
-function wordPath(size) {
+function wordPath(size, text = 'Poyshik') {
   let x = 0;
   const parts = [];
-  const glyphs = font.stringToGlyphs('Poyshik');
+  const glyphs = font.stringToGlyphs(text);
   glyphs.forEach((g, i) => {
     parts.push(g.getPath(x, 0, size).toPathData(2));
     const kern = i < glyphs.length - 1 ? font.getKerningValue(g, glyphs[i + 1]) : 0;
     x += ((g.advanceWidth + kern) / font.unitsPerEm) * size + TRACKING * size;
   });
-  const p = font.getPath('Poyshik', 0, 0, size, { kerning: true });
+  const p = font.getPath(text, 0, 0, size, { kerning: true });
   const bb = p.getBoundingBox();
   return { d: parts.join(''), width: x - TRACKING * size, top: bb.y1, bottom: bb.y2, left: bb.x1 };
 }
@@ -83,6 +83,31 @@ function lockup(ink, accent, title) {
     `-4 ${top.toFixed(1)} ${width.toFixed(1)} ${(bottom - top).toFixed(1)}`,
     mark(ink, accent, `translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${s.toFixed(4)})`) +
       `<path d="${W.d}" fill="${ink}" transform="translate(${wordX.toFixed(2)} 0)"/>`,
+    title,
+  );
+}
+
+// ── Monogram lockup: the symbol IS the "P", followed by "oyshik" ─────────────
+// Same cap alignment as the horizontal lockup; the word sits close to the
+// bowl so the symbol reads as the first letter. Groups carry classes so the
+// website can animate them (logo-mark, logo-word).
+const OY = wordPath(200, 'oyshik');
+function monogram(ink, accent, title) {
+  const size = 200;
+  const capPx = (capHeight / font.unitsPerEm) * size;
+  const s = capPx / (P_BASE - P_TOP);
+  const tx = -MARK.x * s;
+  const ty = -capPx - P_TOP * s;
+  const bowlRight = (376 - MARK.x) * s; // outer edge of the P's bowl
+  const wordX = bowlRight + capPx * 0.04;
+  const top = Math.min(-capPx, OY.top) - 4;
+  const bottom = Math.max(ty + (MARK.y + MARK.h) * s, OY.bottom) + 4;
+  const width = wordX + OY.width + 4;
+  return svg(
+    `-4 ${top.toFixed(1)} ${width.toFixed(1)} ${(bottom - top).toFixed(1)}`,
+    `<g class="logo-mark">` +
+      mark(ink, accent, `translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${s.toFixed(4)})`) +
+      `</g><g class="logo-word"><path d="${OY.d}" fill="${ink}" transform="translate(${wordX.toFixed(2)} 0)"/></g>`,
     title,
   );
 }
@@ -117,6 +142,8 @@ const files = {
   'poyshik-wordmark-on-dark.svg': svg(wordVB, `<path d="${W.d}" fill="${C.paper}"/>`, 'Poyshik'),
   'poyshik-logo-light.svg': lockup(C.forest, C.marigold, 'Poyshik'),
   'poyshik-logo-dark.svg': lockup(C.paper, C.marigoldLight, 'Poyshik'),
+  'poyshik-logo-p-light.svg': monogram(C.forest, C.marigold, 'Poyshik'),
+  'poyshik-logo-p-dark.svg': monogram(C.paper, C.marigoldLight, 'Poyshik'),
   'poyshik-logo-stacked-light.svg': stacked(C.forest, C.marigold, 'Poyshik'),
   'poyshik-logo-stacked-dark.svg': stacked(C.paper, C.marigoldLight, 'Poyshik'),
   'poyshik-app-icon.svg': icon(C.forest, C.cream, C.marigold, 'Poyshik app icon'),

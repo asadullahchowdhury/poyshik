@@ -235,22 +235,13 @@ class _WelcomePage extends StatelessWidget {
         ),
       ],
       children: [
-        // ListView stretches children to full width; Align keeps the mark's size.
-        const Reveal(
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: PoyshikSymbol(height: 84),
-          ),
+        // The logo is the title: the P lands, then "oyshik" slides out.
+        // ListView stretches children to full width; Align keeps its size.
+        const Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: PoyshikLogo(size: 60, animate: true),
         ),
-        const SizedBox(height: Space.xxl),
-        Reveal(
-          index: 1,
-          child: Text(
-            l10n.appTitle,
-            style: AppType.display.copyWith(fontSize: 64, color: c.brand),
-          ),
-        ),
-        const SizedBox(height: Space.xs),
+        const SizedBox(height: Space.lg),
         Reveal(
           index: 2,
           child: Text(
