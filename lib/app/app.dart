@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../core/money/currency_provider.dart';
 import '../l10n/app_localizations.dart';
+import 'intro.dart';
 import 'router.dart';
 import 'theme/theme.dart';
 import 'theme/theme_mode_provider.dart';
@@ -18,8 +19,10 @@ class PoyshikApp extends ConsumerWidget {
     // amount redraw when the currency setting changes (a rare event).
     final currency = ref.watch(currencyProvider);
     return MaterialApp.router(
-      builder: (context, child) =>
-          KeyedSubtree(key: ValueKey(currency.code), child: child!),
+      // The intro sits outside the currency key, so it plays once per launch.
+      builder: (context, child) => AppIntro(
+        child: KeyedSubtree(key: ValueKey(currency.code), child: child!),
+      ),
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,

@@ -221,6 +221,19 @@ void main() {
     await _shot(tester, 'insights_tall_dark');
   });
 
+  // The opening intro mid-way: bloom open, "oyshik" sliding out of the P.
+  testWidgets('intro light', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_app());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 950));
+    await expectLater(
+      find.byType(PoyshikApp),
+      matchesGoldenFile('out/intro_light.png'),
+    );
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('accounts light', (tester) async {
     await _phone(tester);
     await tester.pumpWidget(_app());
