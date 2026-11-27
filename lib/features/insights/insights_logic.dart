@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/dates/periods.dart';
 import '../../core/money/money.dart';
+import '../../data/db/app_database.dart';
 import '../home/summary_repository.dart';
 
 enum PeriodKind { week, month }
@@ -86,8 +87,8 @@ sealed class Insight {
 }
 
 final class TopCategoryShare extends Insight {
-  const TopCategoryShare(this.categoryName, this.percent);
-  final String categoryName;
+  const TopCategoryShare(this.category, this.percent);
+  final Category category;
   final int percent;
 }
 
@@ -124,7 +125,7 @@ List<Insight> buildInsights({
   if (categories.isNotEmpty) {
     final top = categories.first;
     final share = (top.total.minor * 100 / spent.minor).round();
-    if (share >= 20) out.add(TopCategoryShare(top.category.name, share));
+    if (share >= 20) out.add(TopCategoryShare(top.category, share));
   }
 
   final change = percentChange(spent, previousSpent);

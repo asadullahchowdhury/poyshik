@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +22,7 @@ import '../../core/widgets/primary_button.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
+import '../categories/category_label.dart';
 import 'transactions_repository.dart';
 
 /// Opens quick entry over whatever tab is showing. Pass [existing] to edit.
@@ -573,7 +574,7 @@ class _CategoryStrip extends StatelessWidget {
                 ),
                 const SizedBox(height: Space.xs),
                 Text(
-                  cat.name,
+                  cat.label(AppLocalizations.of(context)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppType.caption.copyWith(

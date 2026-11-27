@@ -27,10 +27,11 @@ class ActivityScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
-    final hasAny =
-        (ref.watch(transactionViewsProvider).value ?? const []).isNotEmpty;
+    final hasAny = ref.watch(hasTransactionsProvider).value ?? false;
     final filter = ref.watch(activityFilterProvider);
     final views = ref.watch(filteredViewsProvider);
+    final limit = ref.watch(activityLimitProvider);
+    final summary = ref.watch(filteredSummaryProvider).value;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tabActivity)),
@@ -56,49 +57,72 @@ class ActivityScreen extends ConsumerWidget {
                         );
                 }
                 final groups = groupByDay(list);
-                final spent = groups.fold(
-                  Money.zero,
-                  (sum, g) => sum + g.spent,
-                );
-                return ListView.builder(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.fromLTRB(
-                    Space.screen,
-                    Space.xs,
-                    Space.screen,
-                    Space.huge,
-                  ),
-                  itemCount: groups.length + (filter.isActive ? 1 : 0),
-                  itemBuilder: (context, i) {
-                    if (filter.isActive && i == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          Space.xs,
-                          Space.sm,
-                          Space.xs,
-                          0,
-                        ),
-                        child: Text(
-                          l10n.activityResults(
-                            list.length,
-                            MoneyFormat.format(spent),
-                          ),
-                          style: AppType.label.copyWith(color: c.inkMuted),
-                        ),
-                      );
+                // A full page means there may be more rows to load.
+                final mayHaveMore = list.length >= limit;
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (n) {
+                    if (mayHaveMore &&
+                        !views.isLoading &&
+                        n.metrics.extentAfter < 800) {
+                      ref.read(activityLimitProvider.notifier).loadMore();
                     }
-                    final group = groups[i - (filter.isActive ? 1 : 0)];
-                    // Only the first screenful staggers in; later groups
-                    // appear immediately while scrolling.
-                    return i < 6
-                        ? Reveal(
-                            key: ValueKey(group.day),
-                            index: i,
-                            child: _DaySection(group: group),
-                          )
-                        : _DaySection(group: group);
+                    return false;
                   },
+                  child: ListView.builder(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.fromLTRB(
+                      Space.screen,
+                      Space.xs,
+                      Space.screen,
+                      Space.huge,
+                    ),
+                    itemCount:
+                        groups.length +
+                        (filter.isActive ? 1 : 0) +
+                        (mayHaveMore ? 1 : 0),
+                    itemBuilder: (context, i) {
+                      final header = filter.isActive ? 1 : 0;
+                      if (i == header + groups.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(Space.xl),
+                          child: Center(
+                            child: SizedBox.square(
+                              dimension: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      }
+                      if (filter.isActive && i == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            Space.xs,
+                            Space.sm,
+                            Space.xs,
+                            0,
+                          ),
+                          child: Text(
+                            l10n.activityResults(
+                              summary?.count ?? list.length,
+                              MoneyFormat.format(summary?.spent ?? Money.zero),
+                            ),
+                            style: AppType.label.copyWith(color: c.inkMuted),
+                          ),
+                        );
+                      }
+                      final group = groups[i - header];
+                      // Only the first screenful staggers in; later groups
+                      // appear immediately while scrolling.
+                      return i < 6
+                          ? Reveal(
+                              key: ValueKey(group.day),
+                              index: i,
+                              child: _DaySection(group: group),
+                            )
+                          : _DaySection(group: group);
+                    },
+                  ),
                 );
               },
             ),

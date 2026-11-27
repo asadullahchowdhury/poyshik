@@ -130,4 +130,30 @@ void main() {
     expect(await count(f(query: '250.50')), 1);
     expect(await count(f(query: '120')), 1);
   });
+
+  test('limit pages newest first', () async {
+    final page = await repo.watchViews(limit: 2).first;
+    expect(page.map((v) => v.tx.occurredAt), [
+      DateTime(2026, 11, 5),
+      DateTime(2026, 11, 4),
+    ]);
+    expect(await repo.watchViews(limit: 10).first, hasLength(5));
+  });
+
+  test('summary counts and sums every match, not just a page', () async {
+    final all = await repo.watchSummary(noFilter).first;
+    expect(all.count, 5);
+    // Expenses only: 250 + 250.50 + 120.
+    expect(all.spent, const Money(25000 + 25050 + 12000));
+
+    final food = await repo.watchSummary(f(query: 'food')).first;
+    expect(food.count, 2);
+    expect(food.spent, const Money(37000));
+  });
+
+  test('hasAny', () async {
+    expect(await repo.watchHasAny().first, isTrue);
+    await db.delete(db.transactions).go();
+    expect(await repo.watchHasAny().first, isFalse);
+  });
 }

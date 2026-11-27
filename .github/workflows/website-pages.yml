@@ -34,6 +34,7 @@ jobs:
           BASE_PATH: ${{ vars.BASE_PATH }}
           PUBLIC_PLAY_STORE_URL: ${{ vars.PUBLIC_PLAY_STORE_URL }}
           PUBLIC_APK_URL: ${{ vars.PUBLIC_APK_URL }}
+          PUBLIC_APK_VERSION: ${{ vars.PUBLIC_APK_VERSION }}
           PUBLIC_CONTACT_EMAIL: ${{ vars.PUBLIC_CONTACT_EMAIL }}
       - uses: actions/upload-pages-artifact@v3
         with:

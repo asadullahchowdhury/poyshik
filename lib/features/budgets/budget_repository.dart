@@ -6,8 +6,8 @@ import '../../core/money/money.dart';
 import '../../data/db/app_database.dart';
 import '../../data/db/database_provider.dart';
 
-/// The single overall monthly budget (category budgets come later and use
-/// the same table with a categoryId).
+/// Monthly budgets: one overall budget (categoryId null) and optional
+/// per-category limits (one row per categoryId), all in the same table.
 class BudgetRepository {
   BudgetRepository(this._db);
 
@@ -32,6 +32,33 @@ class BudgetRepository {
 
   Future<void> clearOverall() =>
       (_db.delete(_db.budgets)..where((b) => b.categoryId.isNull())).go();
+
+  /// Per-category monthly limits, keyed by category id.
+  Stream<Map<String, Money>> watchCategoryLimits() =>
+      (_db.select(
+        _db.budgets,
+      )..where((b) => b.categoryId.isNotNull())).watch().map(
+        (rows) => {for (final b in rows) b.categoryId!: Money(b.amount)},
+      );
+
+  /// Sets the limit for [categoryId], keeping exactly one row for it.
+  Future<void> setCategoryLimit(String categoryId, Money amount) {
+    return _db.transaction(() async {
+      await clearCategoryLimit(categoryId);
+      await _db
+          .into(_db.budgets)
+          .insert(
+            BudgetsCompanion.insert(
+              amount: amount.minor,
+              categoryId: Value(categoryId),
+            ),
+          );
+    });
+  }
+
+  Future<void> clearCategoryLimit(String categoryId) => (_db.delete(
+    _db.budgets,
+  )..where((b) => b.categoryId.equals(categoryId))).go();
 }
 
 final budgetRepositoryProvider = Provider<BudgetRepository>(
@@ -40,6 +67,10 @@ final budgetRepositoryProvider = Provider<BudgetRepository>(
 
 final overallBudgetProvider = StreamProvider<Money?>(
   (ref) => ref.watch(budgetRepositoryProvider).watchOverall(),
+);
+
+final categoryLimitsProvider = StreamProvider<Map<String, Money>>(
+  (ref) => ref.watch(budgetRepositoryProvider).watchCategoryLimits(),
 );
 
 /// Where the month stands against its budget.

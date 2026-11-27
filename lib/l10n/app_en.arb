@@ -272,5 +272,64 @@
   "activityEarned": "{amount} in",
   "@activityEarned": {
     "placeholders": { "amount": { "type": "String" } }
+  },
+  "@_builtInCategories": {},
+  "catFood": "Food",
+  "catGroceries": "Groceries",
+  "catTransport": "Transport",
+  "catShopping": "Shopping",
+  "catBills": "Bills & utilities",
+  "catRent": "Rent",
+  "catHealth": "Health",
+  "catEducation": "Education",
+  "catEntertainment": "Entertainment",
+  "catMobile": "Mobile & internet",
+  "catGifts": "Gifts & giving",
+  "catOtherExpense": "Other",
+  "catSalary": "Salary",
+  "catBusiness": "Business",
+  "catGiftIncome": "Gifts received",
+  "catOtherIncome": "Other income",
+  "settingsMoney": "Money",
+  "settingsCurrency": "Currency",
+  "settingsCurrencyHelp": "Changes how amounts are shown everywhere. Amounts you've logged are not converted.",
+  "currencyPickTitle": "Choose currency",
+  "currencyBDT": "Bangladeshi taka",
+  "currencyINR": "Indian rupee",
+  "currencyPKR": "Pakistani rupee",
+  "currencyNPR": "Nepalese rupee",
+  "currencyLKR": "Sri Lankan rupee",
+  "currencyUSD": "US dollar",
+  "currencyEUR": "Euro",
+  "currencyGBP": "British pound",
+  "currencyAED": "UAE dirham",
+  "currencySAR": "Saudi riyal",
+  "currencyMYR": "Malaysian ringgit",
+  "currencySGD": "Singapore dollar",
+  "budgetsTitle": "Budgets",
+  "budgetsOverall": "Monthly budget",
+  "budgetsOverallNotSet": "Not set. Tap to add one.",
+  "budgetsCategories": "Category limits",
+  "budgetsCategoriesHelp": "Optional monthly limits for single categories. They don't change your overall budget.",
+  "budgetsNoLimit": "No limit",
+  "budgetsSpentOf": "{spent} of {limit}",
+  "@budgetsSpentOf": {
+    "placeholders": { "spent": { "type": "String" }, "limit": { "type": "String" } }
+  },
+  "budgetsOverBy": "{amount} over",
+  "@budgetsOverBy": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "budgetCategoryTitle": "{category} limit",
+  "@budgetCategoryTitle": {
+    "placeholders": { "category": { "type": "String" } }
+  },
+  "budgetCategoryHelp": "The most you want to spend on this category each month.",
+  "budgetCategoryAmount": "Limit per month",
+  "budgetCategorySave": "Save limit",
+  "budgetCategoryRemove": "Remove limit",
+  "homeOfLimit": "of {amount}",
+  "@homeOfLimit": {
+    "placeholders": { "amount": { "type": "String" } }
   }
 }

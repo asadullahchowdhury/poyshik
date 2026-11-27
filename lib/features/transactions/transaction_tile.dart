@@ -7,6 +7,8 @@ import '../../core/widgets/amount_text.dart';
 import '../../core/widgets/app_icons.dart';
 import '../../core/widgets/category_icon.dart';
 import '../../data/db/app_database.dart';
+import '../../l10n/app_localizations.dart';
+import '../categories/category_label.dart';
 import 'transactions_repository.dart';
 
 /// One transaction row: category icon, title, account · time · note, amount.
@@ -27,7 +29,7 @@ class TransactionTile extends StatelessWidget {
 
     final title = isTransfer
         ? '${view.account.name} → ${view.toAccount?.name ?? '?'}'
-        : category?.name ?? '?';
+        : category?.label(AppLocalizations.of(context)) ?? '?';
     final icon = isTransfer
         ? Icons.swap_horiz_rounded
         : AppIcons.of(category?.icon ?? 'more');

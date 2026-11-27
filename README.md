@@ -26,6 +26,9 @@ Most expense trackers feel like accounting software. Poyshik is built for the 5-
 - 🏷️ **Categories** — color-coded categories with icons and a palette picker
 - 📜 **Transactions** — full history grouped by day, week and month
 - 📊 **Insights** — see where your money goes by period and category
+- 🎯 **Budgets** — a monthly budget with a daily safe-to-spend figure, plus optional per-category limits
+- 💾 **Backup & export** — JSON backup/restore and CSV export through the share sheet
+- 💱 **Currency** — taka by default; pick another display currency in Settings
 - 🌗 **Light / dark themes** on a consistent design system (colors, spacing, typography)
 - 📴 **Offline-first** — everything stays on the device
 
@@ -50,16 +53,18 @@ lib/
   └── features/   # accounts · categories · home · insights · settings · transactions
 ```
 
-Feature-first structure: each feature owns its screens, widgets and providers; shared logic lives in `core`, persistence in `data`.
+Feature-first structure: each feature owns its screens, widgets and providers; shared logic lives in `core`, persistence in `data`. Database rules and the schema-change checklist are in [docs/DATABASE.md](docs/DATABASE.md).
 
 ## 🗺️ Roadmap
 
 - [x] Accounts, categories and transactions
 - [x] Insights by period and category
 - [x] Light / dark theming
-- [ ] Budgets and spending limits
+- [x] Monthly budget and per-category limits
+- [x] Local backup / restore and CSV export
+- [x] App-wide currency setting
 - [ ] Recurring transactions
-- [ ] Export to CSV
+- [ ] Translations (built-in category names are already translatable)
 - [ ] Cloud backup & sync
 - [ ] Play Store release
 

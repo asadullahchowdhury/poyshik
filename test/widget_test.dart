@@ -15,13 +15,18 @@ Future<void> _pumpApp(WidgetTester tester, {bool firstLaunch = false}) async {
       // Widget tests avoid the real database; data logic is tested in test/data.
       overrides: [
         startupNeedsOnboardingProvider.overrideWithValue(firstLaunch),
-        transactionViewsProvider.overrideWith((ref) => Stream.value(const [])),
+        recentViewsProvider.overrideWith((ref) => Stream.value(const [])),
+        hasTransactionsProvider.overrideWith((ref) => Stream.value(false)),
         filteredViewsProvider.overrideWith((ref) => Stream.value(const [])),
+        filteredSummaryProvider.overrideWith(
+          (ref) => Stream.value((count: 0, spent: Money.zero)),
+        ),
         activeAccountsProvider.overrideWith((ref) => Stream.value(const [])),
         periodTotalProvider.overrideWith(
           (ref, query) => Stream.value(Money.zero),
         ),
         overallBudgetProvider.overrideWith((ref) => Stream.value(null)),
+        categoryLimitsProvider.overrideWith((ref) => Stream.value(const {})),
         categoryTotalsProvider.overrideWith(
           (ref, range) => Stream.value(const []),
         ),

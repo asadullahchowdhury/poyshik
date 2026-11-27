@@ -1,3 +1,4 @@
+import 'currency.dart';
 import 'money.dart';
 
 /// The pieces of a formatted amount, so widgets can style each part
@@ -9,10 +10,15 @@ typedef MoneyParts = ({
   String fraction,
 });
 
-/// Formats money the way people in Bangladesh read it: ৳1,25,000.50
-/// (South Asian grouping: last three digits, then groups of two).
+/// Formats money in the app currency: ৳1,25,000.50 for taka (South Asian
+/// grouping: last three digits, then groups of two), \$125,000.50 for dollars.
 abstract final class MoneyFormat {
-  static const symbol = '৳';
+  /// The app currency. Set from the currency setting (see
+  /// currency_provider.dart) before anything is drawn; taka by default.
+  static AppCurrency currency = AppCurrency.bdt;
+
+  /// Symbol of the app currency, e.g. for an input's prefix.
+  static String get symbol => currency.symbol;
 
   /// Proper minus sign (U+2212), wider and better aligned than '-'.
   static const minus = '−';
@@ -41,12 +47,26 @@ abstract final class MoneyFormat {
     final fraction = money.poisha;
     return (
       sign: money.isNegative ? minus : '',
-      symbol: symbol,
-      whole: groupIndian(money.wholeTaka),
+      symbol: currency.prefix,
+      whole: switch (currency.grouping) {
+        DigitGrouping.southAsian => groupIndian(money.wholeTaka),
+        DigitGrouping.western => groupWestern(money.wholeTaka),
+      },
       fraction: fraction == 0 && !alwaysDecimals
           ? ''
           : '.${fraction.toString().padLeft(2, '0')}',
     );
+  }
+
+  /// 125000 → "125,000".
+  static String groupWestern(int value) {
+    final s = value.abs().toString();
+    final out = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) out.write(',');
+      out.write(s[i]);
+    }
+    return out.toString();
   }
 
   /// 125000 → "1,25,000".

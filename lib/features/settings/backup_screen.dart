@@ -12,6 +12,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../app/theme/theme.dart';
 import '../../app/theme/theme_mode_provider.dart';
 import '../../core/dates/week_start_provider.dart';
+import '../../core/money/currency.dart';
+import '../../core/money/currency_provider.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../data/backup/backup_service.dart';
@@ -54,9 +56,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     } on BackupFormatException catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            e.message.contains('newer') ? l10n.backupNewer : l10n.backupInvalid,
-          ),
+          content: Text(e.isNewer ? l10n.backupNewer : l10n.backupInvalid),
         ),
       );
     } on Object catch (e) {
@@ -131,6 +131,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     if (theme != null) ref.read(themeModeProvider.notifier).set(theme);
     final week = int.tryParse(settings[SettingKeys.weekStart] ?? '');
     if (week != null) ref.read(weekStartProvider.notifier).set(week);
+    ref
+        .read(currencyProvider.notifier)
+        .set(currencyFor(settings[SettingKeys.currency]));
     ref.invalidate(_lastBackupProvider);
 
     messenger.showSnackBar(
