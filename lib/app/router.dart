@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/accounts/accounts_screen.dart';
+import '../features/bazar/bazar_screen.dart';
 import '../features/budgets/budgets_screen.dart';
 import '../features/categories/categories_screen.dart';
 import '../features/dev/component_gallery_screen.dart';
@@ -10,6 +11,7 @@ import '../features/home/home_screen.dart';
 import '../features/insights/insights_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/onboarding_service.dart';
+import '../features/recurring/recurring_ui.dart';
 import '../features/settings/backup_screen.dart';
 import '../features/settings/more_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -20,12 +22,14 @@ import 'shell/app_shell.dart';
 abstract final class Routes {
   static const welcome = '/welcome';
   static const home = '/home';
+  static const bazar = '/home/bazar';
   static const activity = '/activity';
   static const insights = '/insights';
   static const more = '/more';
   static const accounts = '/more/accounts';
   static const categories = '/more/categories';
   static const budgets = '/more/budgets';
+  static const recurring = '/more/recurring';
   static const settings = '/more/settings';
   static const backup = '/more/backup';
   static const gallery = '/more/gallery';
@@ -56,6 +60,12 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: Routes.home,
                 builder: (context, state) => const HomeScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'bazar',
+                    builder: (_, _) => const BazarScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -92,6 +102,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'budgets',
                     builder: (context, state) => const BudgetsScreen(),
+                  ),
+                  GoRoute(
+                    path: 'recurring',
+                    builder: (_, _) => const RecurringScreen(),
                   ),
                   GoRoute(
                     path: 'backup',

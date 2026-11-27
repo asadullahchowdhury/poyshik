@@ -78,8 +78,13 @@ class TransactionsRepository {
   }
 
   /// Saves a new entry and remembers its account as the next default.
-  Future<String> add(TransactionDraft d) async {
-    final row = await _db.into(_db.transactions).insertReturning(_companion(d));
+  /// [recurringId] links an entry to the recurring rule that created it.
+  Future<String> add(TransactionDraft d, {String? recurringId}) async {
+    final row = await _db
+        .into(_db.transactions)
+        .insertReturning(
+          _companion(d).copyWith(recurringId: Value(recurringId)),
+        );
     await _settings.set(SettingKeys.lastAccountId, d.accountId);
     return row.id;
   }

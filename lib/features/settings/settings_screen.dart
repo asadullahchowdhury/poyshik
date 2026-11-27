@@ -10,6 +10,7 @@ import '../../core/locale/language_provider.dart';
 import '../../core/money/currency_provider.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../l10n/app_localizations.dart';
+import '../reminders/reminders.dart';
 import 'currency_picker.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -120,6 +121,7 @@ class SettingsScreen extends ConsumerWidget {
               style: AppType.caption.copyWith(color: c.inkMuted),
             ),
           ]),
+          section(l10n.remindersTitle, [const _RemindersSettings()]),
           section(l10n.settingsMoney, [
             label(l10n.settingsCurrency),
             Material(
@@ -207,6 +209,85 @@ class SettingsScreen extends ConsumerWidget {
           ]),
         ],
       ),
+    );
+  }
+}
+
+/// Daily nudge (with its time) and bill-due notifications. Switching either
+/// on asks for notification permission first.
+class _RemindersSettings extends ConsumerWidget {
+  const _RemindersSettings();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final settings = ref.watch(remindersProvider);
+    final notifier = ref.read(remindersProvider.notifier);
+
+    Future<bool> allowed() async {
+      final messenger = ScaffoldMessenger.of(context);
+      final ok = await ReminderService.instance.requestPermission();
+      if (!ok) {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.reminderDenied)));
+      }
+      return ok;
+    }
+
+    final daily = settings.daily;
+    return Column(
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            l10n.reminderDaily,
+            style: AppType.bodyStrong.copyWith(color: c.ink),
+          ),
+          subtitle: Text(
+            l10n.reminderDailyHelp,
+            style: AppType.caption.copyWith(color: c.inkMuted),
+          ),
+          value: daily != null,
+          onChanged: (on) async {
+            if (on && !await allowed()) return;
+            notifier.setDaily(on ? const TimeOfDay(hour: 21, minute: 0) : null);
+          },
+        ),
+        if (daily != null)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.schedule_rounded),
+            title: Text(l10n.reminderTime),
+            trailing: Text(
+              daily.format(context),
+              style: AppType.bodyStrong.copyWith(color: c.brand),
+            ),
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: daily,
+              );
+              if (picked != null) notifier.setDaily(picked);
+            },
+          ),
+        const Divider(),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            l10n.reminderBills,
+            style: AppType.bodyStrong.copyWith(color: c.ink),
+          ),
+          subtitle: Text(
+            l10n.reminderBillsHelp,
+            style: AppType.caption.copyWith(color: c.inkMuted),
+          ),
+          value: settings.bills,
+          onChanged: (on) async {
+            if (on && !await allowed()) return;
+            notifier.setBills(on: on);
+          },
+        ),
+      ],
     );
   }
 }

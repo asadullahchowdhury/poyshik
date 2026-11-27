@@ -10,7 +10,16 @@ export 'tables.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Accounts, Categories, Transactions, Budgets, AppSettings],
+  tables: [
+    Accounts,
+    Categories,
+    Transactions,
+    Budgets,
+    AppSettings,
+    QuickTemplates,
+    RecurringRules,
+    BazarItems,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the on-device database, or [executor] in tests
@@ -26,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   /// 3. write the new `fromXToY` step in [migration] below;
   /// 4. extend test/drift/app/migration_test.dart and run the tests.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,7 +45,16 @@ class AppDatabase extends _$AppDatabase {
     },
     // One generated step per version bump; it throws for any upgrade it
     // doesn't know, so a missing step fails loudly instead of corrupting data.
-    onUpgrade: stepByStep(),
+    onUpgrade: stepByStep(
+      // v2: favourites, recurring rules, bazar list; transactions remember
+      // the rule that created them. Rules first: the new column refers to it.
+      from1To2: (m, schema) async {
+        await m.createTable(schema.recurringRules);
+        await m.createTable(schema.quickTemplates);
+        await m.createTable(schema.bazarItems);
+        await m.addColumn(schema.transactions, schema.transactions.recurringId);
+      },
+    ),
     beforeOpen: (details) async {
       // SQLite leaves foreign keys off unless asked, per connection.
       await customStatement('PRAGMA foreign_keys = ON');

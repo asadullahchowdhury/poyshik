@@ -1,7 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
-// Schema v1. Conventions:
+// Schema v2 (v2 added favourites, recurring rules and the bazar list).
+// Conventions:
 // - Money columns are INTEGER poisha (never REAL).
 // - IDs are UUID v4 text, so data can be merged or synced later.
 // - Enums are stored by name (text), so reordering an enum can't corrupt data.
@@ -17,6 +18,9 @@ enum AccountType { cash, bank, mobileWallet, card, other }
 enum CategoryKind { expense, income }
 
 enum TransactionType { expense, income, transfer }
+
+/// How often a recurring rule repeats.
+enum RecurrenceFrequency { daily, weekly, monthly, yearly }
 
 mixin _Timestamps on Table {
   DateTimeColumn get createdAt => dateTime().clientDefault(DateTime.now)();
@@ -83,6 +87,10 @@ class Transactions extends Table with _Timestamps {
   DateTimeColumn get occurredAt => dateTime()();
   TextColumn get note => text().nullable().withLength(max: 500)();
 
+  /// Set when a recurring rule created this transaction (v2).
+  TextColumn get recurringId =>
+      text().nullable().references(RecurringRules, #id)();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 
@@ -120,4 +128,93 @@ class AppSettings extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {key};
+}
+
+/// One-tap entries ("Rickshaw 50"), shown at the top of the add sheet (v2).
+@DataClassName('QuickTemplate')
+class QuickTemplates extends Table with _Timestamps {
+  TextColumn get id => text().clientDefault(newId)();
+
+  /// Expense or income only.
+  TextColumn get type => textEnum<TransactionType>()();
+  IntColumn get amount => integer()();
+  TextColumn get categoryId => text().references(Categories, #id)();
+
+  /// Null uses the sheet's current account.
+  TextColumn get accountId => text().nullable().references(Accounts, #id)();
+  TextColumn get note => text().nullable().withLength(max: 500)();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (amount > 0)',
+    "CHECK (type IN ('expense', 'income'))",
+  ];
+}
+
+/// Rent, salary, subscriptions: a transaction that repeats (v2).
+/// With [autoLog] the app records it when due; otherwise it shows as a bill
+/// to confirm with "Mark paid".
+@DataClassName('RecurringRule')
+class RecurringRules extends Table with _Timestamps {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get type => textEnum<TransactionType>()();
+  IntColumn get amount => integer()();
+  TextColumn get accountId => text().references(Accounts, #id)();
+  @ReferenceName('recurringTransfersIn')
+  TextColumn get toAccountId => text().nullable().references(Accounts, #id)();
+  TextColumn get categoryId => text().nullable().references(Categories, #id)();
+  TextColumn get note => text().nullable().withLength(max: 500)();
+  TextColumn get frequency => textEnum<RecurrenceFrequency>()();
+
+  /// Every [interval] units of [frequency] (1 = every month, 3 = quarterly).
+  IntColumn get interval => integer().withDefault(const Constant(1))();
+
+  /// Day the schedule is anchored to (keeps "the 31st" stable across months).
+  DateTimeColumn get startDate => dateTime()();
+
+  /// The next occurrence not yet logged or paid.
+  DateTimeColumn get nextDue => dateTime()();
+  DateTimeColumn get endDate => dateTime().nullable()();
+  BoolColumn get autoLog => boolean().withDefault(const Constant(true))();
+  BoolColumn get isPaused => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (amount > 0)',
+    'CHECK (interval >= 1)',
+    "CHECK ((type = 'transfer' AND to_account_id IS NOT NULL "
+        'AND category_id IS NULL AND to_account_id <> account_id) '
+        "OR (type IN ('expense', 'income') AND category_id IS NOT NULL "
+        'AND to_account_id IS NULL))',
+  ];
+}
+
+/// The shopping list: things to buy, ticked off as you go (v2).
+@DataClassName('BazarItem')
+class BazarItems extends Table with _Timestamps {
+  TextColumn get id => text().clientDefault(newId)();
+  TextColumn get name => text().withLength(min: 1, max: 80)();
+
+  /// Free text like "2 kg" or "1 dozen".
+  TextColumn get quantity => text().nullable().withLength(max: 30)();
+
+  /// Expected price in poisha, if the user noted one.
+  IntColumn get estimate => integer().nullable()();
+  BoolColumn get isDone => boolean().withDefault(const Constant(false))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+    'CHECK (estimate IS NULL OR estimate > 0)',
+  ];
 }

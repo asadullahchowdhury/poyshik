@@ -42,6 +42,16 @@ class MoreScreen extends StatelessWidget {
                 label: l10n.moreBudget,
                 onTap: () => context.go(Routes.budgets),
               ),
+              _Item(
+                icon: Icons.shopping_basket_rounded,
+                label: l10n.bazarTitle,
+                onTap: () => context.go(Routes.bazar),
+              ),
+              _Item(
+                icon: Icons.event_repeat_rounded,
+                label: l10n.moreRecurring,
+                onTap: () => context.go(Routes.recurring),
+              ),
             ],
           ),
           const SizedBox(height: Space.lg),
