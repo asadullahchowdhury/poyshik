@@ -50,15 +50,24 @@ const TRACKING = -0.012; // em, slightly tight for display
 function wordPath(size, text = 'Poyshik') {
   let x = 0;
   const parts = [];
+  const glyphs2 = [];
   const glyphs = font.stringToGlyphs(text);
   glyphs.forEach((g, i) => {
     parts.push(g.getPath(x, 0, size).toPathData(2));
+    glyphs2.push(parts[parts.length - 1]);
     const kern = i < glyphs.length - 1 ? font.getKerningValue(g, glyphs[i + 1]) : 0;
     x += ((g.advanceWidth + kern) / font.unitsPerEm) * size + TRACKING * size;
   });
   const p = font.getPath(text, 0, 0, size, { kerning: true });
   const bb = p.getBoundingBox();
-  return { d: parts.join(''), width: x - TRACKING * size, top: bb.y1, bottom: bb.y2, left: bb.x1 };
+  return {
+    d: parts.join(''),
+    glyphs: glyphs2,
+    width: x - TRACKING * size,
+    top: bb.y1,
+    bottom: bb.y2,
+    left: bb.x1,
+  };
 }
 
 // Wordmark alone (baseline at y=0 inside its own viewBox)
@@ -107,7 +116,10 @@ function monogram(ink, accent, title) {
     `-4 ${top.toFixed(1)} ${width.toFixed(1)} ${(bottom - top).toFixed(1)}`,
     `<g class="logo-mark">` +
       mark(ink, accent, `translate(${tx.toFixed(2)} ${ty.toFixed(2)}) scale(${s.toFixed(4)})`) +
-      `</g><g class="logo-word"><path d="${OY.d}" fill="${ink}" transform="translate(${wordX.toFixed(2)} 0)"/></g>`,
+      // One path per letter, so pages can animate them one by one.
+      `</g><g class="logo-word"><g transform="translate(${wordX.toFixed(2)} 0)" fill="${ink}">` +
+      OY.glyphs.map((d, i) => `<path class="logo-letter" style="--i:${i}" d="${d}"/>`).join('') +
+      `</g></g>`,
     title,
   );
 }
