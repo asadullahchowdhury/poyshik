@@ -15,12 +15,16 @@ import 'package:poyshik/app/app.dart';
 import 'package:poyshik/core/dates/clock.dart';
 import 'package:poyshik/core/money/money.dart';
 import 'package:poyshik/data/db/app_database.dart';
+import 'package:poyshik/data/db/database_provider.dart';
 import 'package:poyshik/data/settings_repository.dart';
 import 'package:poyshik/features/accounts/accounts_repository.dart';
+import 'package:poyshik/features/bazar/bazar_repository.dart';
 import 'package:poyshik/features/budgets/budget_repository.dart';
 import 'package:poyshik/features/categories/categories_repository.dart';
+import 'package:poyshik/features/favourites/favourites_repository.dart';
 import 'package:poyshik/features/home/summary_repository.dart';
 import 'package:poyshik/features/onboarding/onboarding_service.dart';
+import 'package:poyshik/features/recurring/recurring_repository.dart';
 import 'package:poyshik/features/transactions/transactions_repository.dart';
 
 import 'demo_data.dart';
@@ -71,12 +75,14 @@ class _DemoTransactionsRepository extends TransactionsRepository {
 
   /// Demo accounts aren't in the database, so saving only pretends.
   @override
-  Future<String> add(TransactionDraft d) async => 'demo-saved';
+  Future<String> add(TransactionDraft d, {String? recurringId}) async =>
+      'demo-saved';
 }
 
 Widget _app({
   bool dark = false,
   bool firstLaunch = false,
+  List<BazarItem> bazar = const [],
   String language = 'en',
 }) => ProviderScope(
   overrides: [
@@ -93,6 +99,17 @@ Widget _app({
       (ref) => Stream.value(demoViews.take(5).toList()),
     ),
     hasTransactionsProvider.overrideWith((ref) => Stream.value(true)),
+    // Anything not faked above (e.g. the launch catch-up) gets an empty
+    // in-memory database instead of a file.
+    appDatabaseProvider.overrideWith((ref) {
+      final db = AppDatabase(NativeDatabase.memory());
+      ref.onDispose(db.close);
+      return db;
+    }),
+    // v2 features: nothing scheduled, no favourites, empty bazar list.
+    recurringRulesProvider.overrideWith((ref) => Stream.value(const [])),
+    favouritesProvider.overrideWith((ref, type) => Stream.value(const [])),
+    bazarItemsProvider.overrideWith((ref) => Stream.value(bazar)),
     filteredViewsProvider.overrideWith((ref) => Stream.value(demoViews)),
     filteredSummaryProvider.overrideWith(
       (ref) => Stream.value((
@@ -148,9 +165,36 @@ Future<void> _shot(WidgetTester tester, String name) async {
 }
 
 Future<void> _tapText(WidgetTester tester, String text) async {
-  await tester.tap(find.text(text).last);
+  // Tabs show their label only when active; otherwise find them by tooltip.
+  final byText = find.text(text);
+  await tester.tap(
+    byText.evaluate().isNotEmpty ? byText.last : find.byTooltip(text).last,
+  );
   await tester.pumpAndSettle();
 }
+
+/// A shopping trip in progress: some ticked with what was paid.
+final _demoBazar = [
+  for (final (i, (name, qty, price, done)) in [
+    ('Rice', '5 kg', 450, false),
+    ('Lentils', '2 kg', 280, false),
+    ('Onion', '2 kg', null, false),
+    ('Soybean oil', '1 L', 190, false),
+    ('Eggs', '2 dozen', 300, true),
+    ('Hilsa', '1 kg', 1250, true),
+    ('Green chilli', null, null, true),
+  ].indexed)
+    BazarItem(
+      id: 'b$i',
+      name: name,
+      quantity: qty,
+      estimate: price == null ? null : price * 100,
+      isDone: done,
+      sortOrder: i,
+      createdAt: demoNow,
+      updatedAt: demoNow,
+    ),
+];
 
 void main() {
   setUpAll(_loadFonts);
@@ -178,6 +222,20 @@ void main() {
       await tester.pumpAndSettle();
       await _tapText(tester, 'Insights');
       await _shot(tester, 'insights_$suffix');
+    });
+
+    testWidgets('bazar $suffix', (tester) async {
+      await _phone(tester);
+      await tester.pumpWidget(_app(dark: dark, bazar: _demoBazar));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.textContaining('Bazar list'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.textContaining('Bazar list'));
+      await tester.pumpAndSettle();
+      await _shot(tester, 'bazar_$suffix');
     });
 
     testWidgets('add expense $suffix', (tester) async {
