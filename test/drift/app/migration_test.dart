@@ -1,7 +1,7 @@
 // Migration safety net. Every released schema is snapshotted in
 // drift_schemas/app/ and turned into test helpers under generated/.
 // Regenerate both with `dart run drift_dev make-migrations` (docs/DATABASE.md).
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,5 +75,36 @@ void main() {
       await verifier.migrateAndValidate(migrated, current);
       await migrated.close();
     }
+  });
+
+  test('v1 data survives the upgrade to v2', () async {
+    final schema = await verifier.schemaAt(1);
+    const now = '2026-11-01T10:00:00.000';
+    schema.rawDatabase
+      ..execute(
+        'INSERT INTO accounts (id, name, type, icon, created_at, updated_at) '
+        "VALUES ('a1', 'Cash', 'cash', 'cash', '$now', '$now')",
+      )
+      ..execute(
+        'INSERT INTO categories (id, name, kind, icon, created_at, updated_at) '
+        "VALUES ('c1', 'Food', 'expense', 'food', '$now', '$now')",
+      )
+      ..execute(
+        'INSERT INTO transactions (id, type, amount, account_id, category_id, '
+        "occurred_at, note, created_at, updated_at) VALUES ('t1', 'expense', "
+        "5000, 'a1', 'c1', '$now', 'Lunch', '$now', '$now')",
+      );
+
+    final db = AppDatabase(schema.newConnection());
+    final tx = await db.select(db.transactions).getSingle();
+    expect(tx.id, 't1');
+    expect(tx.amount, 5000);
+    expect(tx.note, 'Lunch');
+    expect(tx.recurringId, isNull);
+    // The new tables exist and are empty.
+    expect(await db.select(db.recurringRules).get(), isEmpty);
+    expect(await db.select(db.quickTemplates).get(), isEmpty);
+    expect(await db.select(db.bazarItems).get(), isEmpty);
+    await db.close();
   });
 }

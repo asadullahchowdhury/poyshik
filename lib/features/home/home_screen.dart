@@ -25,12 +25,16 @@ import '../../core/widgets/state_views.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
+import '../bazar/bazar_screen.dart';
 import '../budgets/budget_repository.dart';
 import '../budgets/budget_sheet.dart';
 import '../categories/category_label.dart';
+import '../recurring/recurring_repository.dart';
+import '../recurring/recurring_ui.dart';
 import '../transactions/add_transaction_sheet.dart';
 import '../transactions/transaction_tile.dart';
 import '../transactions/transactions_repository.dart';
+import 'forecast.dart';
 import 'summary_repository.dart';
 
 /// The month at a glance: what you spent, how that compares, what's safe to
@@ -62,6 +66,9 @@ class HomeScreen extends ConsumerWidget {
     final sections = <Widget>[
       _HeroCard(now: now),
       _TodayWeek(now: now),
+      if (ref.watch(upcomingRecurringProvider).isNotEmpty)
+        const UpcomingSection(),
+      if (ref.watch(hasBazarToBuyProvider)) const BazarHomeCard(),
       const _AccountsStrip(),
       // Nothing until we know, so first-run never flashes for existing users.
       if (hasAny.value == false)
@@ -156,6 +163,12 @@ class _HeroCard extends ConsumerWidget {
     final status = budget == null
         ? null
         : budgetStatus(budget: budget, spent: spent, now: now);
+    final forecast = forecastMonth(
+      entries: ref.watch(expenseEntriesProvider(month)).value ?? const [],
+      now: now,
+      budget: budget,
+      scheduled: ref.watch(scheduledExpensesProvider),
+    );
 
     return PoyshikCard(
       color: c.hero,
@@ -202,6 +215,10 @@ class _HeroCard extends ConsumerWidget {
                   _BudgetBlock(status: status)
                 else
                   _SetBudgetPrompt(label: l10n.budgetSetPrompt),
+                if (forecast != null) ...[
+                  const SizedBox(height: Space.lg),
+                  _ForecastLine(forecast: forecast, hasBudget: budget != null),
+                ],
                 const SizedBox(height: Space.xl),
                 Container(height: 1, color: c.onHero.withValues(alpha: 0.12)),
                 const SizedBox(height: Space.lg),
@@ -282,6 +299,59 @@ class _ComparePill extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Where the month is heading at the current pace, on the hero.
+class _ForecastLine extends StatelessWidget {
+  const _ForecastLine({required this.forecast, required this.hasBudget});
+
+  final MonthForecast forecast;
+  final bool hasBudget;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    final over = forecast.over.isPositive;
+    final headline = l10n.homeForecast(MoneyFormat.format(forecast.total));
+    final String? detail = !hasBudget
+        ? null
+        : !over
+        ? l10n.homeForecastOnTrack
+        : forecast.crossesOn == null
+        ? l10n.homeForecastOverNoDate(MoneyFormat.format(forecast.over))
+        : l10n.homeForecastOver(
+            MoneyFormat.format(forecast.over),
+            DateFormat.MMMd().format(forecast.crossesOn!),
+          );
+    final tone = over
+        ? Color.lerp(c.accent, Colors.white, 0.2)!
+        : c.onHeroMuted;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(
+            over ? Icons.warning_amber_rounded : Icons.show_chart_rounded,
+            size: 18,
+            color: tone,
+          ),
+        ),
+        const SizedBox(width: Space.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(headline, style: AppType.label.copyWith(color: c.onHero)),
+              if (detail != null)
+                Text(detail, style: AppType.caption.copyWith(color: tone)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

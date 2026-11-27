@@ -465,11 +465,21 @@ const biggest = bars.indexOf(Math.max(...bars));
           <div class="cta__actions">
             <DownloadButton variant="accent" />
           </div>
-          {!site.download.playStoreUrl && site.download.apkUrl && (
+          {!site.download.playStoreUrl && (site.download.apkArm64Url || site.download.apkUrl) && (
             <p class="cta__note">
               {site.download.apkVersion && `Version ${site.download.apkVersion} · `}
               Android {site.download.minAndroid}+ · direct APK. Your phone will ask you to allow
               installs from your browser the first time.
+              {site.download.apkArm64Url && site.download.apkUrl && (
+                <>
+                  <br />
+                  Didn’t install? Older or unusual phones need the{' '}
+                  <a href={site.download.apkUrl} rel="noopener">
+                    universal APK
+                  </a>{' '}
+                  (larger, works everywhere).
+                </>
+              )}
             </p>
           )}
         </div>
@@ -1123,6 +1133,10 @@ const biggest = bars.indexOf(Math.max(...bars));
     max-width: 44ch;
     font: 0.85rem/1.5 var(--font-ui);
     color: var(--on-forest-muted);
+  }
+  .cta__note a {
+    color: var(--on-forest);
+    text-underline-offset: 3px;
   }
 
   /* Responsive */

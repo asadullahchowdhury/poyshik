@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poyshik/core/money/money.dart';
@@ -155,4 +156,98 @@ void main() {
     expect(BackupService.csvField('say "hi"'), '"say ""hi"""');
     expect(BackupService.csvField('two\nlines'), '"two\nlines"');
   });
+
+  test(
+    'v2 tables round-trip, and v1 backups without them still restore',
+    () async {
+      final source = await _seeded();
+      final cash = (await source.select(source.accounts).get()).first.id;
+      final food = (await (source.select(
+        source.categories,
+      )..where((c) => c.systemKey.equals('food'))).getSingle()).id;
+      final rule = await source
+          .into(source.recurringRules)
+          .insertReturning(
+            RecurringRulesCompanion.insert(
+              type: TransactionType.expense,
+              amount: 120000,
+              accountId: cash,
+              categoryId: Value(food),
+              frequency: RecurrenceFrequency.monthly,
+              startDate: DateTime(2026, 11, 1),
+              nextDue: DateTime(2026, 12, 1),
+            ),
+          );
+      await source
+          .into(source.transactions)
+          .insert(
+            TransactionsCompanion.insert(
+              type: TransactionType.expense,
+              amount: 120000,
+              accountId: cash,
+              categoryId: Value(food),
+              occurredAt: DateTime(2026, 11, 1),
+              recurringId: Value(rule.id),
+            ),
+          );
+      await source
+          .into(source.quickTemplates)
+          .insert(
+            QuickTemplatesCompanion.insert(
+              type: TransactionType.expense,
+              amount: 5000,
+              categoryId: food,
+              note: const Value('Rickshaw'),
+            ),
+          );
+      await source
+          .into(source.bazarItems)
+          .insert(
+            BazarItemsCompanion.insert(
+              name: 'Rice',
+              quantity: const Value('5 kg'),
+            ),
+          );
+      final json = await BackupService(source).exportJson();
+
+      final target = AppDatabase(NativeDatabase.memory());
+      await BackupService(target).restore(json);
+      expect(
+        (await target.select(target.recurringRules).getSingle()).amount,
+        120000,
+      );
+      expect(
+        (await target.select(target.quickTemplates).getSingle()).note,
+        'Rickshaw',
+      );
+      expect(
+        (await target.select(target.bazarItems).getSingle()).quantity,
+        '5 kg',
+      );
+      final linked = await (target.select(
+        target.transactions,
+      )..where((t) => t.recurringId.equals(rule.id))).get();
+      expect(linked, hasLength(1));
+
+      // A v1 backup: no v2 sections, transactions without recurringId.
+      final v1 = jsonDecode(
+        await BackupService(await _seeded()).exportJson(),
+      ) as Map<String, dynamic>;
+      final data = v1['data'] as Map<String, dynamic>
+        ..remove('recurring')
+        ..remove('favourites')
+        ..remove('bazar');
+      for (final t in data['transactions'] as List) {
+        (t as Map<String, dynamic>).remove('recurringId');
+      }
+      v1['schemaVersion'] = 1;
+      await BackupService(target).restore(jsonEncode(v1));
+      expect(await target.select(target.recurringRules).get(), isEmpty);
+      expect(await target.select(target.bazarItems).get(), isEmpty);
+      expect(await target.select(target.transactions).get(), hasLength(2));
+
+      await source.close();
+      await target.close();
+    },
+  );
 }

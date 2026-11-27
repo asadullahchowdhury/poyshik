@@ -10,6 +10,7 @@ import '../../core/dates/periods.dart';
 import '../../core/money/money.dart';
 import '../../core/money/money_format.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/feedback.dart';
 import '../../core/widgets/motion.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../core/widgets/state_views.dart';
@@ -167,6 +168,8 @@ class _DaySection extends ConsumerWidget {
             label: l10n.txUndo,
             onPressed: () => unawaited(repo.restore(removed)),
           ),
+          duration: snackDuration,
+          persist: false,
         ),
       );
   }

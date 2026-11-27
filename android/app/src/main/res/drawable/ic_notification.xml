@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification icon: the Poyshik mark as a white silhouette (Android tints
+     it). Same paths as ic_launcher_foreground.xml, scaled to fill the icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.23"
+        android:scaleY="0.23"
+        android:translateX="-6.49"
+        android:translateY="-11.78">
+        <path
+            android:fillType="evenOdd"
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M168,140A36,36 0,0 1,204 104H276A100,100 0,0 1,276 304H248V320H168Z M248,160H274A44,44 0,0 1,274 248H248Z" />
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M248,334C250,394 220,440 150,468C158,430 168,392 168,334Z" />
+    </group>
+</vector>

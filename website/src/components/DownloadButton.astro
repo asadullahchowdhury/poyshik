@@ -7,10 +7,11 @@ interface Props {
   variant?: 'primary' | 'accent';
 }
 const { variant = 'primary' } = Astro.props;
-const href = site.download.playStoreUrl ?? site.download.apkUrl;
+// Prefer the store, then the small arm64 APK, then the universal one.
+const href = site.download.playStoreUrl ?? site.download.apkArm64Url ?? site.download.apkUrl;
 const label = site.download.playStoreUrl
   ? 'Get it on Google Play'
-  : site.download.apkUrl
+  : site.download.apkArm64Url || site.download.apkUrl
     ? 'Download for Android'
     : 'Coming soon to Android';
 ---

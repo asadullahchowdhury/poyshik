@@ -450,5 +450,225 @@
   "settingsLanguageEnglish": "English",
   "settingsLanguageBangla": "বাংলা",
   "settingsLanguageHelp": "Bangla also shows amounts and dates in Bangla digits.",
-  "errorLoading": "Something went wrong loading this."
+  "errorLoading": "Something went wrong loading this.",
+  "commonCancel": "Cancel",
+  "commonRemove": "Remove",
+  "commonDelete": "Delete",
+  "commonSave": "Save",
+  "favSaveAs": "Favourite",
+  "favLogged": "{name} saved",
+  "@favLogged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "favRemoveTitle": "Remove this favourite?",
+  "favRemoveBody": "Entries you already logged stay as they are.",
+  "favAdded": "Saved as a favourite too",
+  "homeForecast": "Heading for {amount} by month end",
+  "@homeForecast": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeForecastOver": "{amount} over budget, around {date}",
+  "@homeForecastOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "homeForecastOverNoDate": "{amount} over budget at this pace",
+  "@homeForecastOverNoDate": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeForecastOnTrack": "Within budget at this pace",
+  "txRepeat": "Repeat",
+  "repeatTitle": "Repeat this entry",
+  "repeatNever": "Doesn't repeat",
+  "repeatDaily": "Every day",
+  "repeatWeekly": "Every week",
+  "repeatMonthly": "Every month",
+  "repeatYearly": "Every year",
+  "repeatAutoTitle": "Log it automatically",
+  "repeatAutoBody": "Saved on each due date, like a salary.",
+  "repeatBillTitle": "Remind me as a bill",
+  "repeatBillBody": "Shows as due; you confirm when it's paid.",
+  "repeatDone": "Done",
+  "upcomingTitle": "Upcoming",
+  "dueToday": "Due today",
+  "dueOverdue": "Overdue since {date}",
+  "@dueOverdue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dueOn": "Due {date}",
+  "@dueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "dueAuto": "Logs automatically {date}",
+  "@dueAuto": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "billPaid": "Paid",
+  "billSkip": "Skip",
+  "billPaidSaved": "Marked as paid",
+  "billSkipped": "Skipped this time",
+  "moreRecurring": "Recurring & bills",
+  "recurringEmptyTitle": "Nothing repeats yet",
+  "recurringEmptyBody": "When adding an entry, tap Repeat for rent, salary or bills.",
+  "recurringPaused": "Paused",
+  "recurringPause": "Pause",
+  "recurringResume": "Resume",
+  "recurringDeleteTitle": "Stop repeating?",
+  "recurringDeleteBody": "Entries already logged stay as they are.",
+  "recurringStop": "Stop repeating",
+  "recurringNext": "Next: {date}",
+  "@recurringNext": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "recurringAuto": "Automatic",
+  "recurringBill": "Bill",
+  "recurringAmount": "Amount",
+  "remindersTitle": "Reminders",
+  "reminderDaily": "Daily reminder",
+  "reminderDailyHelp": "A gentle nudge to log the day. Skipped if you already did.",
+  "reminderTime": "Time",
+  "reminderBills": "Bill due dates",
+  "reminderBillsHelp": "A notification on the morning a bill is due.",
+  "reminderDenied": "Notifications are off for Poyshik. Turn them on in your phone's settings.",
+  "notifDailyTitle": "Logged today's spending?",
+  "notifDailyBody": "It takes a few seconds.",
+  "notifChannel": "Reminders",
+  "notifBillTitle": "{name} is due today",
+  "@notifBillTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notifBillBody": "{amount} · open Poyshik to mark it paid",
+  "@notifBillBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "bazarTitle": "Bazar list",
+  "bazarAddHint": "Add an item, e.g. Rice 5 kg",
+  "bazarToBuy": "{count} to buy",
+  "@bazarToBuy": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "bazarDone": "In the bag",
+  "bazarEstimate": "About {amount}",
+  "@bazarEstimate": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "bazarEmptyTitle": "Nothing on the list",
+  "bazarEmptyBody": "Write what you need and tick it off as you shop. Untick all to reuse it next month.",
+  "bazarClearDone": "Clear bought items",
+  "bazarUntickAll": "Untick all for next time",
+  "bazarLogSpend": "Log what you spent",
+  "bazarItemDeleted": "Item removed",
+  "bazarCleared": "{count} items cleared",
+  "@bazarCleared": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "bazarEditTitle": "Edit item",
+  "bazarName": "Item",
+  "bazarQuantity": "Quantity",
+  "bazarPrice": "Price (optional)",
+  "bazarExpenseNote": "Bazar",
+  "homeBazarMore": "+{count} more",
+  "@homeBazarMore": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
+  "voiceSpeak": "Speak",
+  "voiceListening": "Listening…",
+  "voiceHint": "Try “Rickshaw 50 taka” or “Salary 45 thousand”",
+  "voiceUnavailable": "Voice input isn't available on this phone.",
+  "voiceNoMatch": "Didn't catch that. Try again.",
+  "voiceTryAgain": "Try again",
+  "voiceUse": "Use this",
+  "voiceMicDenied": "Microphone access is off. Allow it in your phone's settings.",
+  "voiceBanglaMissing": "Bangla speech isn't installed on this phone, so English is used.",
+  "bazarPaid": "Paid {amount}",
+  "@bazarPaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "bazarPriceTitle": "Price of {name}",
+  "@bazarPriceTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bazarPriceHelpToBuy": "What you expect to pay. Change it after buying.",
+  "bazarPriceHelpBought": "What you actually paid.",
+  "bazarPriceClear": "Clear",
+  "bazarAddPrice": "Add price",
+  "bazarVoiceHint": "Try “Rice 5 kg, dal 2 kg and oil 1 litre”",
+  "bazarAdded": "{count, plural, =1{1 item added} other{{count} items added}}",
+  "@bazarAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bazarNothingHeard": "Couldn't find items in that. Try again."
 }

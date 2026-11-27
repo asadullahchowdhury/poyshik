@@ -58,6 +58,16 @@ class BackupService {
       'settings': [
         for (final r in await _db.select(_db.appSettings).get()) r.toJson(),
       ],
+      // Schema v2. Older backups simply lack these sections.
+      'recurring': [
+        for (final r in await _db.select(_db.recurringRules).get()) r.toJson(),
+      ],
+      'favourites': [
+        for (final r in await _db.select(_db.quickTemplates).get()) r.toJson(),
+      ],
+      'bazar': [
+        for (final r in await _db.select(_db.bazarItems).get()) r.toJson(),
+      ],
     };
     return const JsonEncoder.withIndent(' ').convert({
       'format': format,
@@ -118,6 +128,9 @@ class BackupService {
       transactions: rows('transactions', TransactionRecord.fromJson),
       budgets: rows('budgets', Budget.fromJson),
       settings: rows('settings', AppSetting.fromJson),
+      recurring: rows('recurring', RecurringRule.fromJson),
+      favourites: rows('favourites', QuickTemplate.fromJson),
+      bazar: rows('bazar', BazarItem.fromJson),
     );
     _checkReferences(parsed);
     final createdAt =
@@ -142,14 +155,32 @@ class BackupService {
     if (accountIds.length != p.accounts.length ||
         categoryIds.length != p.categories.length ||
         !unique(p.transactions.map((t) => t.id)) ||
-        !unique(p.budgets.map((b) => b.id))) {
+        !unique(p.budgets.map((b) => b.id)) ||
+        !unique(p.recurring.map((r) => r.id)) ||
+        !unique(p.favourites.map((f) => f.id)) ||
+        !unique(p.bazar.map((b) => b.id))) {
       throw const BackupFormatException('Duplicate rows');
+    }
+    final ruleIds = {for (final r in p.recurring) r.id};
+    for (final r in p.recurring) {
+      final ok =
+          accountIds.contains(r.accountId) &&
+          (r.toAccountId == null || accountIds.contains(r.toAccountId)) &&
+          (r.categoryId == null || categoryIds.contains(r.categoryId));
+      if (!ok) throw const BackupFormatException('Broken recurring link');
+    }
+    for (final f in p.favourites) {
+      final ok =
+          categoryIds.contains(f.categoryId) &&
+          (f.accountId == null || accountIds.contains(f.accountId));
+      if (!ok) throw const BackupFormatException('Broken favourite link');
     }
     for (final t in p.transactions) {
       final ok =
           accountIds.contains(t.accountId) &&
           (t.toAccountId == null || accountIds.contains(t.toAccountId)) &&
-          (t.categoryId == null || categoryIds.contains(t.categoryId));
+          (t.categoryId == null || categoryIds.contains(t.categoryId)) &&
+          (t.recurringId == null || ruleIds.contains(t.recurringId));
       if (!ok) throw const BackupFormatException('Broken transaction link');
     }
     for (final b in p.budgets) {
@@ -166,6 +197,9 @@ class BackupService {
     await _db.transaction(() async {
       // Children before parents (foreign keys).
       await _db.delete(_db.transactions).go();
+      await _db.delete(_db.recurringRules).go();
+      await _db.delete(_db.quickTemplates).go();
+      await _db.delete(_db.bazarItems).go();
       await _db.delete(_db.budgets).go();
       await _db.delete(_db.categories).go();
       await _db.delete(_db.accounts).go();
@@ -174,6 +208,9 @@ class BackupService {
         b
           ..insertAll(_db.accounts, parsed.accounts)
           ..insertAll(_db.categories, parsed.categories)
+          ..insertAll(_db.recurringRules, parsed.recurring)
+          ..insertAll(_db.quickTemplates, parsed.favourites)
+          ..insertAll(_db.bazarItems, parsed.bazar)
           ..insertAll(_db.transactions, parsed.transactions)
           ..insertAll(_db.budgets, parsed.budgets)
           ..insertAll(_db.appSettings, parsed.settings);
@@ -243,6 +280,9 @@ typedef _Parsed = ({
   List<TransactionRecord> transactions,
   List<Budget> budgets,
   List<AppSetting> settings,
+  List<RecurringRule> recurring,
+  List<QuickTemplate> favourites,
+  List<BazarItem> bazar,
 });
 
 final backupServiceProvider = Provider<BackupService>(

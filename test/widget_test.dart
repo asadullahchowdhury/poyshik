@@ -56,9 +56,11 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Log your first expense'), findsOneWidget);
+    // Every tab is named (the active one shows its label, all have tooltips).
     for (final tab in ['Home', 'Activity', 'Insights', 'More']) {
-      expect(find.text(tab), findsWidgets);
+      expect(find.byTooltip(tab), findsOneWidget);
     }
+    expect(find.text('Home'), findsOneWidget);
   });
 
   testWidgets('first launch goes through setup pages', (tester) async {
@@ -80,11 +82,11 @@ void main() {
   testWidgets('switches tabs', (tester) async {
     await _pumpApp(tester);
 
-    await tester.tap(find.text('Activity'));
+    await tester.tap(find.byTooltip('Activity'));
     await tester.pumpAndSettle();
     expect(find.text('No transactions yet'), findsOneWidget);
 
-    await tester.tap(find.text('Insights'));
+    await tester.tap(find.byTooltip('Insights'));
     await tester.pumpAndSettle();
     expect(find.text('Insights need a little data'), findsOneWidget);
   });
@@ -94,16 +96,21 @@ void main() {
   ) async {
     await _pumpApp(tester);
 
-    await tester.tap(find.text('More'));
+    await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Design system'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Design system'));
     await tester.pumpAndSettle();
     expect(find.text('SPENT IN NOVEMBER'), findsOneWidget);
 
     // Leave and come back: the More tab still shows the gallery.
-    await tester.tap(find.text('Home'));
+    await tester.tap(find.byTooltip('Home'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('More'));
+    await tester.tap(find.byTooltip('More'));
     await tester.pumpAndSettle();
     expect(find.text('SPENT IN NOVEMBER'), findsOneWidget);
   });

@@ -24,6 +24,11 @@ import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
 import '../categories/category_form_sheet.dart';
 import '../categories/category_label.dart';
+import '../favourites/favourites_repository.dart';
+import '../recurring/recurring_repository.dart';
+import '../recurring/recurring_ui.dart';
+import '../voice/voice_parser.dart';
+import '../voice/voice_sheet.dart';
 import 'transactions_repository.dart';
 
 /// Opens quick entry over whatever tab is showing. Pass [existing] to edit.
@@ -34,19 +39,38 @@ import 'transactions_repository.dart';
 Future<void> showAddTransactionSheet(
   BuildContext context, {
   TransactionRecord? existing,
+  EntryPrefill? prefill,
+  bool startWithVoice = false,
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (_) => _EntrySheet(existing: existing),
+    builder: (_) => _EntrySheet(
+      existing: existing,
+      prefill: prefill,
+      startWithVoice: startWithVoice,
+    ),
   );
 }
 
+/// Starting values for a new entry (from voice input or the bazar list).
+/// Anything null is left for the user to fill in.
+typedef EntryPrefill = ({
+  TransactionType? type,
+  Money? amount,
+  String? categoryId,
+  String? note,
+});
+
 class _EntrySheet extends ConsumerStatefulWidget {
-  const _EntrySheet({this.existing});
+  const _EntrySheet({this.existing, this.prefill, this.startWithVoice = false});
 
   final TransactionRecord? existing;
+  final EntryPrefill? prefill;
+
+  /// Opens listening straight away (long-press on the add button).
+  final bool startWithVoice;
 
   @override
   ConsumerState<_EntrySheet> createState() => _EntrySheetState();
@@ -63,6 +87,12 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
   late bool _showNote;
   bool _saving = false;
 
+  /// Also keep this entry as a one-tap favourite.
+  bool _saveFavourite = false;
+
+  /// How this new entry repeats; null = once.
+  RepeatChoice? _repeat;
+
   bool get _isEdit => widget.existing != null;
   bool get _isIncome => _type == TransactionType.income;
   bool get _isTransfer => _type == TransactionType.transfer;
@@ -71,22 +101,63 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    _type = e?.type ?? TransactionType.expense;
-    _input = e == null
+    final pre = widget.prefill;
+    _type = e?.type ?? pre?.type ?? TransactionType.expense;
+    final startAmount = e != null ? Money(e.amount) : pre?.amount;
+    _input = startAmount == null
         ? const AmountInput()
-        : AmountInput(
-            MoneyFormat.format(
-              Money(e.amount),
-              withSymbol: false,
-            ).replaceAll(',', ''),
-          );
-    _categoryId = e?.categoryId;
+        : AmountInput(_plainAmount(startAmount));
+    _categoryId = e?.categoryId ?? pre?.categoryId;
     _accountId = e?.accountId;
     _toAccountId = e?.toAccountId;
     _occurredAt = e?.occurredAt ?? DateTime.now();
-    _note = TextEditingController(text: e?.note ?? '');
-    _showNote = (e?.note ?? '').isNotEmpty;
+    _note = TextEditingController(text: e?.note ?? pre?.note ?? '');
+    _showNote = _note.text.isNotEmpty;
     if (_accountId == null) unawaited(_loadDefaultAccount());
+    if (widget.startWithVoice) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _voice());
+    }
+  }
+
+  /// Listens, then fills in whatever was understood. Nothing is saved
+  /// until the user checks it and taps Save.
+  Future<void> _voice() async {
+    final l10n = AppLocalizations.of(context);
+    final spoken = await showVoiceSheet(context);
+    if (spoken == null || !mounted) return;
+    final categories = [
+      ...await ref.read(categoriesByUsageProvider(CategoryKind.expense).future),
+      ...await ref.read(categoriesByUsageProvider(CategoryKind.income).future),
+    ];
+    if (!mounted) return;
+    final e = parseVoiceEntry(
+      spoken,
+      categories: categories,
+      names: (c) => c.label(l10n),
+    );
+    unawaited(HapticFeedback.mediumImpact());
+    setState(() {
+      final type = e.type ?? (_isTransfer ? TransactionType.expense : _type);
+      if (type != _type) {
+        _type = type;
+        _categoryId = null;
+      }
+      if (e.amount != null) _input = AmountInput(_plainAmount(e.amount!));
+      if (e.categoryId != null) _categoryId = e.categoryId;
+      if (e.note != null) {
+        _note.text = e.note!;
+        _showNote = true;
+      }
+    });
+  }
+
+  /// "1250.5" for the numpad: Latin digits, no grouping, no symbol.
+  static String _plainAmount(Money m) {
+    final whole = m.minor ~/ 100;
+    final frac = m.minor % 100;
+    if (frac == 0) return '$whole';
+    final f = frac.toString().padLeft(2, '0');
+    return '$whole.${f.endsWith('0') ? f[0] : f}';
   }
 
   Future<void> _loadDefaultAccount() async {
@@ -180,6 +251,60 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
     });
   }
 
+  /// One tap on a favourite logs it now and closes the sheet.
+  Future<void> _logFavourite(FavouriteView f) async {
+    final accountId = _accountId;
+    if (_saving || accountId == null) return;
+    setState(() => _saving = true);
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = ref.read(transactionsRepositoryProvider);
+    final id = await ref
+        .read(favouritesRepositoryProvider)
+        .log(f.template, accountId: accountId);
+    unawaited(HapticFeedback.mediumImpact());
+    if (!mounted) return;
+    final name = f.template.note ?? f.category.label(l10n);
+    final amount = MoneyFormat.format(Money(f.template.amount));
+    final snack = successSnackBar(
+      context,
+      '${l10n.favLogged(name)} · $amount',
+      action: SnackBarAction(
+        label: l10n.txUndo,
+        onPressed: () => unawaited(repo.delete(id)),
+      ),
+    );
+    Navigator.of(context).pop();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(snack);
+  }
+
+  Future<void> _removeFavourite(FavouriteView f) async {
+    final l10n = AppLocalizations.of(context);
+    unawaited(HapticFeedback.mediumImpact());
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.favRemoveTitle),
+        content: Text(l10n.favRemoveBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.commonCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.commonRemove),
+          ),
+        ],
+      ),
+    );
+    if (ok ?? false) {
+      await ref.read(favouritesRepositoryProvider).remove(f.template.id);
+    }
+  }
+
   Future<void> _save() async {
     if (!_canSave) return;
     setState(() => _saving = true);
@@ -208,6 +333,18 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
         TransactionType.income => l10n.txSavedIncome,
         TransactionType.transfer => l10n.txSavedTransfer,
       };
+      if (_repeat != null) {
+        await ref
+            .read(recurringRepositoryProvider)
+            .createFrom(draft, _repeat!, firstId: newId);
+        if (!mounted) return;
+        message = '$message · ${repeatLabel(l10n, _repeat!.frequency)}';
+      }
+      if (_saveFavourite && !_isTransfer) {
+        final favourites = ref.read(favouritesRepositoryProvider);
+        if (!await favourites.exists(draft)) await favourites.addFrom(draft);
+        message = '$message · ${l10n.favAdded}';
+      }
     }
     unawaited(HapticFeedback.mediumImpact());
     if (!mounted) return;
@@ -267,6 +404,12 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
               onChanged: _setType,
               labels: (l10n.txExpense, l10n.txIncome, l10n.txTransfer),
             ),
+            if (!_isEdit && !_isTransfer)
+              _FavouritesRow(
+                favourites: ref.watch(favouritesProvider(_type)).value ?? [],
+                onTap: (f) => unawaited(_logFavourite(f)),
+                onLongPress: (f) => unawaited(_removeFavourite(f)),
+              ),
             const SizedBox(height: Space.xl),
             // Each key press gives the amount a tiny settle, like a ledger
             // figure being written; skipped when motion is reduced.
@@ -314,6 +457,14 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  if (!_isEdit) ...[
+                    PillChip(
+                      icon: Icons.mic_rounded,
+                      label: l10n.voiceSpeak,
+                      onTap: () => unawaited(_voice()),
+                    ),
+                    const SizedBox(width: Space.sm),
+                  ],
                   if (!_isTransfer) ...[
                     PillChip(
                       icon: account == null
@@ -336,6 +487,38 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
                     selected: _showNote,
                     onTap: () => setState(() => _showNote = !_showNote),
                   ),
+                  if (!_isEdit) ...[
+                    const SizedBox(width: Space.sm),
+                    PillChip(
+                      icon: Icons.event_repeat_rounded,
+                      label: _repeat == null
+                          ? l10n.txRepeat
+                          : repeatLabel(l10n, _repeat!.frequency),
+                      selected: _repeat != null,
+                      onTap: () async {
+                        final choice = await showRepeatSheet(
+                          context,
+                          current: _repeat,
+                          type: _type,
+                        );
+                        if (mounted) setState(() => _repeat = choice);
+                      },
+                    ),
+                  ],
+                  if (!_isEdit && !_isTransfer) ...[
+                    const SizedBox(width: Space.sm),
+                    PillChip(
+                      icon: _saveFavourite
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      label: l10n.favSaveAs,
+                      selected: _saveFavourite,
+                      onTap: () {
+                        unawaited(HapticFeedback.selectionClick());
+                        setState(() => _saveFavourite = !_saveFavourite);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -377,6 +560,113 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
     if (days == 0) return l10n.txToday;
     if (days == 1) return l10n.txYesterday;
     return DateFormat.MMMd().format(_occurredAt);
+  }
+}
+
+/// One-tap favourites: tap logs, long-press removes. Hidden when empty.
+class _FavouritesRow extends StatelessWidget {
+  const _FavouritesRow({
+    required this.favourites,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  final List<FavouriteView> favourites;
+  final ValueChanged<FavouriteView> onTap;
+  final ValueChanged<FavouriteView> onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = context.colors;
+    return AnimatedSize(
+      duration: Motion.fast,
+      curve: Motion.curve,
+      alignment: Alignment.topCenter,
+      child: favourites.isEmpty
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              padding: const EdgeInsets.only(top: Space.md),
+              child: SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: favourites.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: Space.sm),
+                  itemBuilder: (context, i) => _FavouriteChip(
+                    view: favourites[i],
+                    label:
+                        favourites[i].template.note ??
+                        favourites[i].category.label(l10n),
+                    onTap: () => onTap(favourites[i]),
+                    onLongPress: () => onLongPress(favourites[i]),
+                    colors: c,
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _FavouriteChip extends StatelessWidget {
+  const _FavouriteChip({
+    required this.view,
+    required this.label,
+    required this.onTap,
+    required this.onLongPress,
+    required this.colors,
+  });
+
+  final FavouriteView view;
+  final String label;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final PoyshikColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = colors;
+    return Pressable(
+      scale: 0.95,
+      child: Material(
+        color: c.surface,
+        shape: StadiumBorder(side: BorderSide(color: c.hairline)),
+        child: InkWell(
+          customBorder: const StadiumBorder(),
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Space.md),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CategoryIcon(
+                  icon: AppIcons.of(view.category.icon),
+                  color:
+                      PoyshikColors.categoryPalette[view.category.colorIndex %
+                          PoyshikColors.categoryPalette.length],
+                  size: 24,
+                ),
+                const SizedBox(width: Space.sm),
+                Text(
+                  label,
+                  style: AppType.caption.copyWith(
+                    color: c.ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: Space.xs + 2),
+                Text(
+                  MoneyFormat.format(Money(view.template.amount)),
+                  style: AppType.caption.copyWith(color: c.inkMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

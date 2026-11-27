@@ -32,8 +32,12 @@ class SuccessCheck extends StatelessWidget {
   }
 }
 
+/// How long a confirmation stays up: long enough to reach Undo.
+const snackDuration = Duration(seconds: 4);
+
 /// Standard confirmation snackbar: animated check + message (+ optional
-/// action such as Undo).
+/// action such as Undo). It always hides itself after [snackDuration];
+/// Flutter would otherwise keep any snackbar with an action on screen.
 SnackBar successSnackBar(
   BuildContext context,
   String message, {
@@ -48,5 +52,7 @@ SnackBar successSnackBar(
       ],
     ),
     action: action,
+    duration: snackDuration,
+    persist: false,
   );
 }

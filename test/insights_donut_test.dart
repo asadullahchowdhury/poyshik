@@ -105,7 +105,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Insights').last);
+    await tester.tap(find.byTooltip('Insights').last);
     await tester.pumpAndSettle();
 
     final donut = find.byType(PieChart);

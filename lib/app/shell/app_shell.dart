@@ -1,8 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/widgets/motion.dart';
 import '../../core/widgets/phosphor.dart';
+import '../../features/recurring/recurring_ui.dart';
 import '../../features/transactions/add_transaction_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/theme.dart';
@@ -28,33 +32,38 @@ class AppShell extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _goTab(0);
       },
-      child: Scaffold(
-        body: shell,
-        bottomNavigationBar: _BottomBar(
-          currentIndex: shell.currentIndex,
-          onTab: _goTab,
-          onAdd: () => showAddTransactionSheet(context),
-          labels: [
-            l10n.tabHome,
-            l10n.tabActivity,
-            l10n.tabInsights,
-            l10n.tabMore,
-          ],
-          addLabel: l10n.addTransaction,
+      child: AppTasks(
+        child: Scaffold(
+          body: shell,
+          bottomNavigationBar: _BottomBar(
+            currentIndex: shell.currentIndex,
+            onTab: _goTab,
+            onAdd: () => showAddTransactionSheet(context),
+            onAddLongPress: () =>
+                showAddTransactionSheet(context, startWithVoice: true),
+            labels: [
+              l10n.tabHome,
+              l10n.tabActivity,
+              l10n.tabInsights,
+              l10n.tabMore,
+            ],
+            addLabel: l10n.addTransaction,
+          ),
         ),
       ),
     );
   }
 }
 
-/// A floating bar on the page background: a rounded surface with a soft
-/// shadow, a pill that glides to the active tab, filled icons for the active
-/// tab and outlines for the rest, and a raised marigold add button.
+/// A floating bar on the page background. The active tab is a solid brand
+/// pill showing its icon and label; the other tabs are icons only. Widths
+/// animate together, so the pill appears to glide and stretch between tabs.
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.currentIndex,
     required this.onTab,
     required this.onAdd,
+    required this.onAddLongPress,
     required this.labels,
     required this.addLabel,
   });
@@ -62,6 +71,9 @@ class _BottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTab;
   final VoidCallback onAdd;
+
+  /// Long-press: add by voice.
+  final VoidCallback onAddLongPress;
   final List<String> labels;
   final String addLabel;
 
@@ -72,15 +84,16 @@ class _BottomBar extends StatelessWidget {
     (PhRegular.squaresFour, PhFill.squaresFour),
   ];
 
-  /// Slot of each tab in the five-slot row (the add button is slot 2).
-  static const _slots = [0, 1, 3, 4];
-
   static const _barHeight = 66.0;
+  static const _addSlot = 64.0;
+  static const _inset = 7.0;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final slot = _slots[currentIndex];
+    final duration = Motion.reduced(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 420);
 
     return ColoredBox(
       color: c.background,
@@ -96,67 +109,60 @@ class _BottomBar extends StatelessWidget {
           ),
           child: SizedBox(
             height: _barHeight,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // The bar surface.
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(Radii.pill),
-                      border: Border.all(color: c.hairline),
-                      boxShadow: [
-                        BoxShadow(
-                          color: c.shadow,
-                          blurRadius: 28,
-                          offset: const Offset(0, 6),
-                          spreadRadius: -12,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(Radii.pill),
+                border: Border.all(color: c.hairline),
+                boxShadow: [
+                  BoxShadow(
+                    color: c.shadow,
+                    blurRadius: 28,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -12,
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(_inset),
+                child: LayoutBuilder(
+                  builder: (context, box) {
+                    // Each side of the add button is always the same width,
+                    // so the button never moves. On the active tab's side the
+                    // pill takes most of the room and its neighbour keeps
+                    // enough for an icon; the other side splits evenly.
+                    final side = (box.maxWidth - _addSlot) / 2;
+                    const iconRoom = 38.0;
+                    double width(int i) {
+                      final sameSide = (i < 2) == (currentIndex < 2);
+                      if (!sameSide) return side / 2;
+                      return i == currentIndex ? side - iconRoom : iconRoom;
+                    }
+
+                    Widget tab(int i) => _TabItem(
+                      width: width(i),
+                      duration: duration,
+                      label: labels[i],
+                      icon: _icons[i].$1,
+                      selectedIcon: _icons[i].$2,
+                      selected: i == currentIndex,
+                      onTap: () => onTab(i),
+                    );
+                    return Row(
+                      children: [
+                        tab(0),
+                        tab(1),
+                        SizedBox(
+                          width: _addSlot,
+                          child: _AddButton(onAdd, onAddLongPress, addLabel),
                         ),
+                        tab(2),
+                        tab(3),
                       ],
-                    ),
-                  ),
+                    );
+                  },
                 ),
-                // The active pill, gliding between tabs.
-                Positioned.fill(
-                  child: AnimatedAlign(
-                    duration: Motion.reduced(context)
-                        ? Duration.zero
-                        : const Duration(milliseconds: 380),
-                    curve: Curves.easeOutBack,
-                    alignment: Alignment(-1 + slot * 0.5, 0),
-                    child: FractionallySizedBox(
-                      widthFactor: 0.2,
-                      child: Center(
-                        child: Container(
-                          width: 58,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: c.brand.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(Radii.pill),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    for (var s = 0; s < 5; s++)
-                      Expanded(
-                        child: s == 2
-                            ? _AddButton(onAdd, addLabel)
-                            : _TabItem(
-                                label: labels[_slots.indexOf(s)],
-                                icon: _icons[_slots.indexOf(s)].$1,
-                                selectedIcon: _icons[_slots.indexOf(s)].$2,
-                                selected: slot == s,
-                                onTap: () => onTab(_slots.indexOf(s)),
-                              ),
-                      ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -167,6 +173,8 @@ class _BottomBar extends StatelessWidget {
 
 class _TabItem extends StatelessWidget {
   const _TabItem({
+    required this.width,
+    required this.duration,
     required this.label,
     required this.icon,
     required this.selectedIcon,
@@ -174,6 +182,8 @@ class _TabItem extends StatelessWidget {
     required this.onTap,
   });
 
+  final double width;
+  final Duration duration;
   final String label;
   final IconData icon;
   final IconData selectedIcon;
@@ -183,40 +193,80 @@ class _TabItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final color = selected ? c.brand : c.inkSubtle;
+    const curve = Curves.easeOutCubic;
     return Semantics(
       selected: selected,
       button: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Pressable(
-          scale: 0.9,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedSwitcher(
-                duration: Motion.fast,
-                transitionBuilder: (child, a) =>
-                    ScaleTransition(scale: a, child: child),
-                child: Icon(
-                  selected ? selectedIcon : icon,
-                  key: ValueKey(selected),
-                  color: color,
-                  size: 26,
+      label: label,
+      excludeSemantics: true,
+      child: Tooltip(
+        // Inactive tabs are icons only; a long press names them.
+        message: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: duration,
+            curve: curve,
+            width: width,
+            alignment: Alignment.center,
+            child: Pressable(
+              scale: 0.92,
+              child: AnimatedContainer(
+                duration: duration,
+                curve: curve,
+                height: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: selected ? 10 : 0),
+                decoration: BoxDecoration(
+                  color: selected ? c.brand : c.brand.withValues(alpha: 0),
+                  borderRadius: BorderRadius.circular(Radii.pill),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedSwitcher(
+                      duration: Motion.fast,
+                      transitionBuilder: (child, a) =>
+                          ScaleTransition(scale: a, child: child),
+                      child: Icon(
+                        selected ? selectedIcon : icon,
+                        key: ValueKey(selected),
+                        color: selected ? c.onBrand : c.inkSubtle,
+                        size: 24,
+                      ),
+                    ),
+                    // The label unfolds beside the icon on the active tab only.
+                    Flexible(
+                      child: AnimatedSize(
+                        duration: duration,
+                        curve: curve,
+                        child: selected
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                // Shrinks a little rather than cutting a long
+                                // label (Bangla words run wider).
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    label,
+                                    maxLines: 1,
+                                    softWrap: false,
+                                    style: AppType.caption.copyWith(
+                                      fontSize: 13,
+                                      color: c.onBrand,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 3),
-              AnimatedDefaultTextStyle(
-                duration: Motion.fast,
-                style: AppType.caption.copyWith(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
-                child: Text(label, maxLines: 1, overflow: TextOverflow.fade),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -225,9 +275,10 @@ class _TabItem extends StatelessWidget {
 }
 
 class _AddButton extends StatelessWidget {
-  const _AddButton(this.onTap, this.label);
+  const _AddButton(this.onTap, this.onLongPress, this.label);
 
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
   final String label;
 
   @override
@@ -235,7 +286,7 @@ class _AddButton extends StatelessWidget {
     final c = context.colors;
     // Raised above the top edge of the bar, ringed in the page colour.
     return Transform.translate(
-      offset: const Offset(0, -14),
+      offset: const Offset(0, -20),
       child: Center(
         child: Tooltip(
           message: label,
@@ -263,6 +314,10 @@ class _AddButton extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: onTap,
+                  onLongPress: () {
+                    unawaited(HapticFeedback.mediumImpact());
+                    onLongPress();
+                  },
                   child: Icon(PhBold.plus, color: c.onAccent, size: 24),
                 ),
               ),

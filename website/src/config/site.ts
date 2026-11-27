@@ -14,8 +14,13 @@ export const site = {
   download: {
     /** Google Play listing, once published. */
     playStoreUrl: clean(env.PUBLIC_PLAY_STORE_URL),
-    /** Direct APK (e.g. a GitHub release asset), if you choose to offer one. */
+    /** Direct APK (e.g. a GitHub release asset), if you choose to offer one.
+     *  The universal APK: runs on every Android phone, but is the largest. */
     apkUrl: clean(env.PUBLIC_APK_URL),
+    /** Smaller APK for 64-bit ARM phones (nearly every phone since ~2017).
+     *  When set, it becomes the main download and the universal APK is
+     *  offered as a fallback link. */
+    apkArm64Url: clean(env.PUBLIC_APK_ARM64_URL),
     /** Shown next to a direct APK download, e.g. "1.1.0". */
     apkVersion: clean(env.PUBLIC_APK_VERSION),
     /** Lowest Android version the app installs on (minSdk 24). */
@@ -35,4 +40,6 @@ export const site = {
   year: new Date().getFullYear(),
 } as const;
 
-export const downloadAvailable = Boolean(site.download.playStoreUrl || site.download.apkUrl);
+export const downloadAvailable = Boolean(
+  site.download.playStoreUrl || site.download.apkArm64Url || site.download.apkUrl,
+);
