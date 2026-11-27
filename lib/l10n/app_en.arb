@@ -331,5 +331,6 @@
   "homeOfLimit": "of {amount}",
   "@homeOfLimit": {
     "placeholders": { "amount": { "type": "String" } }
-  }
+  },
+  "categoryNewShort": "New"
 }

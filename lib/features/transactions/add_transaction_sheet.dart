@@ -22,6 +22,7 @@ import '../../core/widgets/primary_button.dart';
 import '../../data/db/app_database.dart';
 import '../../l10n/app_localizations.dart';
 import '../accounts/accounts_repository.dart';
+import '../categories/category_form_sheet.dart';
 import '../categories/category_label.dart';
 import 'transactions_repository.dart';
 
@@ -300,6 +301,7 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
               )
             else
               _CategoryStrip(
+                kind: kind,
                 categories: categories,
                 selectedId: _categoryId,
                 onSelected: (id) {
@@ -526,66 +528,142 @@ class _TransferAccounts extends StatelessWidget {
 
 class _CategoryStrip extends StatelessWidget {
   const _CategoryStrip({
+    required this.kind,
     required this.categories,
     required this.selectedId,
     required this.onSelected,
   });
 
+  final CategoryKind kind;
   final List<Category> categories;
   final String? selectedId;
   final ValueChanged<String> onSelected;
 
+  static const _cell = 76.0;
+  static const _height = 172.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tiles = <Widget>[
+      for (final cat in categories)
+        _CategoryTile(
+          label: cat.label(l10n),
+          icon: AppIcons.of(cat.icon),
+          color: PoyshikColors.categoryPalette[cat.colorIndex],
+          selected: cat.id == selectedId,
+          onTap: () => onSelected(cat.id),
+        ),
+      // Create one without leaving the entry: it appears here once saved.
+      _CategoryTile(
+        label: l10n.categoryNewShort,
+        icon: Icons.add_rounded,
+        color: context.colors.inkMuted,
+        selected: false,
+        dashed: true,
+        onTap: () => unawaited(showCategoryFormSheet(context, kind: kind)),
+      ),
+    ];
+
+    return SizedBox(
+      height: _height,
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final perRow = (box.maxWidth / _cell).floor().clamp(1, 99);
+          // Few categories (income): two centred rows that use the width,
+          // instead of a 2x2 block in the corner of a scrolling strip.
+          if (tiles.length <= perRow * 2) {
+            final firstRow = (tiles.length / 2).ceil();
+            final cellWidth = box.maxWidth / perRow;
+            Widget row(List<Widget> items) => Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final t in items) SizedBox(width: cellWidth, child: t),
+              ],
+            );
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                row(tiles.sublist(0, firstRow)),
+                if (tiles.length > firstRow) row(tiles.sublist(firstRow)),
+              ],
+            );
+          }
+          return GridView.builder(
+            scrollDirection: Axis.horizontal,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisExtent: _cell,
+              crossAxisSpacing: Space.sm,
+            ),
+            itemCount: tiles.length,
+            itemBuilder: (context, i) => tiles[i],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+    this.dashed = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final bool dashed;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return SizedBox(
-      height: 172,
-      child: GridView.builder(
-        scrollDirection: Axis.horizontal,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisExtent: 76,
-          crossAxisSpacing: Space.sm,
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, i) {
-          final cat = categories[i];
-          final selected = cat.id == selectedId;
-          final color = PoyshikColors.categoryPalette[cat.colorIndex];
-          return GestureDetector(
-            onTap: () => onSelected(cat.id),
-            child: Column(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(Radii.md + 2),
-                    border: Border.all(
-                      color: selected ? c.brand : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: CategoryIcon(
-                    icon: AppIcons.of(cat.icon),
-                    color: color,
-                    size: 46,
-                  ),
-                ),
-                const SizedBox(height: Space.xs),
-                Text(
-                  cat.label(AppLocalizations.of(context)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppType.caption.copyWith(
-                    color: selected ? c.ink : c.inkMuted,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(Radii.md + 2),
+              border: Border.all(
+                color: selected ? c.brand : Colors.transparent,
+                width: 2,
+              ),
             ),
-          );
-        },
+            child: dashed
+                ? Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(46 * 0.32),
+                      border: Border.all(color: c.hairline, width: 1.5),
+                    ),
+                    child: Icon(icon, color: color, size: 24),
+                  )
+                : CategoryIcon(icon: icon, color: color, size: 46),
+          ),
+          const SizedBox(height: Space.xs),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppType.caption.copyWith(
+              color: selected ? c.ink : c.inkMuted,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

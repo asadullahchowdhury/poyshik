@@ -234,6 +234,16 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('add income light', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add transaction'));
+    await tester.pumpAndSettle();
+    await _tapText(tester, 'Income');
+    await _shot(tester, 'add_income_light');
+  });
+
   testWidgets('accounts light', (tester) async {
     await _phone(tester);
     await tester.pumpWidget(_app());
