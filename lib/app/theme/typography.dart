@@ -7,7 +7,9 @@ abstract final class AppType {
 
   /// Geist and Instrument Serif have no ৳ (U+09F3); this bundled 2 KB font
   /// supplies it so the sign looks the same on every device.
-  static const fallback = ['PoyshikTaka'];
+  /// ৳ from PoyshikTaka; Bangla from Noto Sans Bengali, bundled so Bangla
+  /// looks the same on every phone instead of whatever the system has.
+  static const fallback = ['PoyshikTaka', 'NotoSansBengali'];
 
   static const _tabular = [FontFeature.tabularFigures()];
 
@@ -97,14 +99,29 @@ abstract final class AppType {
     letterSpacing: 0.1,
   );
 
-  /// Small uppercase section headers ("THIS MONTH").
-  static const overline = TextStyle(
+  /// True while the app shows Bangla (set in app.dart). Bangla has no
+  /// capitals, and wide tracking pulls its joined letters apart.
+  static bool bangla = false;
+
+  /// Small uppercase section headers ("THIS MONTH"); in Bangla, a touch
+  /// larger and untracked.
+  static TextStyle get overline => bangla ? _overlineBangla : _overline;
+
+  static const _overline = TextStyle(
     fontFamily: fontFamily,
     fontFamilyFallback: fallback,
     fontSize: 11,
     height: 1.2,
     fontWeight: FontWeight.w600,
     letterSpacing: 1,
+  );
+
+  static const _overlineBangla = TextStyle(
+    fontFamily: fontFamily,
+    fontFamilyFallback: fallback,
+    fontSize: 12.5,
+    height: 1.3,
+    fontWeight: FontWeight.w600,
   );
 
   // Display (Instrument Serif): screen titles, hero statements, wordmark.

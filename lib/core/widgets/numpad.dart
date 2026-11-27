@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
+import '../money/money_format.dart';
 
 /// Custom amount keypad: faster than the system keyboard and always the same
 /// size, so the entry sheet never jumps. Keys give light haptic feedback.
@@ -58,7 +59,10 @@ class Numpad extends StatelessWidget {
         child: const Icon(Icons.backspace_outlined, size: 22),
       );
     }
-    return _NumpadKey(onTap: () => onKey(key), child: Text(key));
+    return _NumpadKey(
+      onTap: () => onKey(key),
+      child: Text(MoneyFormat.digits(key)),
+    );
   }
 }
 

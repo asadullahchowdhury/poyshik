@@ -17,6 +17,20 @@ abstract final class MoneyFormat {
   /// currency_provider.dart) before anything is drawn; taka by default.
   static AppCurrency currency = AppCurrency.bdt;
 
+  /// Draw digits as Bangla numerals (০১২৩৪৫৬৭৮৯). Set from the app
+  /// language (see app.dart); amounts are stored and typed as ASCII digits.
+  static bool bengaliDigits = false;
+
+  /// [text] with its ASCII digits shown in the app's numeral system.
+  static String digits(String text) {
+    if (!bengaliDigits) return text;
+    const bangla = '০১২৩৪৫৬৭৮৯';
+    return text.replaceAllMapped(
+      RegExp('[0-9]'),
+      (m) => bangla[m[0]!.codeUnitAt(0) - 48],
+    );
+  }
+
   /// Symbol of the app currency, e.g. for an input's prefix.
   static String get symbol => currency.symbol;
 
@@ -48,13 +62,13 @@ abstract final class MoneyFormat {
     return (
       sign: money.isNegative ? minus : '',
       symbol: currency.prefix,
-      whole: switch (currency.grouping) {
+      whole: digits(switch (currency.grouping) {
         DigitGrouping.southAsian => groupIndian(money.wholeTaka),
         DigitGrouping.western => groupWestern(money.wholeTaka),
-      },
+      }),
       fraction: fraction == 0 && !alwaysDecimals
           ? ''
-          : '.${fraction.toString().padLeft(2, '0')}',
+          : digits('.${fraction.toString().padLeft(2, '0')}'),
     );
   }
 

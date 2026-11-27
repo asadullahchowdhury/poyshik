@@ -85,6 +85,11 @@ flutter:
         - asset: assets/fonts/instrument_serif/InstrumentSerif-Regular.ttf
         - asset: assets/fonts/instrument_serif/InstrumentSerif-Italic.ttf
           style: italic
+    # Noto Sans Bengali (SIL OFL 1.1, see assets/fonts/noto_bengali/OFL.txt):
+    # Bangla text, as a fallback after Geist / Instrument Serif.
+    - family: NotoSansBengali
+      fonts:
+        - asset: assets/fonts/noto_bengali/NotoSansBengali.ttf
     # Phosphor icons (MIT, see assets/fonts/phosphor/LICENSE.txt); icons in
     # lib/core/widgets/phosphor.dart. Unused glyphs are tree-shaken in release.
     - family: PhosphorRegular

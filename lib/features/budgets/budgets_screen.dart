@@ -206,7 +206,7 @@ class _Progress extends StatelessWidget {
     final progress = limit.isPositive ? spent.minor / limit.minor : 0.0;
     final status = over
         ? l10n.budgetsOverBy(MoneyFormat.format(spent - limit))
-        : '${(progress * 100).round()}%';
+        : MoneyFormat.digits('${(progress * 100).round()}%');
     final spentOf = l10n.budgetsSpentOf(
       MoneyFormat.format(spent),
       MoneyFormat.format(limit),

@@ -40,6 +40,9 @@ Future<void> _loadFonts() async {
       'assets/fonts/geist/Geist-$w.ttf',
   ]);
   await _loadFont('PoyshikTaka', ['assets/fonts/taka/PoyshikTaka.ttf']);
+  await _loadFont('NotoSansBengali', [
+    'assets/fonts/noto_bengali/NotoSansBengali.ttf',
+  ]);
   await _loadFont('InstrumentSerif', [
     'assets/fonts/instrument_serif/InstrumentSerif-Regular.ttf',
   ]);
@@ -71,7 +74,11 @@ class _DemoTransactionsRepository extends TransactionsRepository {
   Future<String> add(TransactionDraft d) async => 'demo-saved';
 }
 
-Widget _app({bool dark = false, bool firstLaunch = false}) => ProviderScope(
+Widget _app({
+  bool dark = false,
+  bool firstLaunch = false,
+  String language = 'en',
+}) => ProviderScope(
   overrides: [
     transactionsRepositoryProvider.overrideWithValue(
       _DemoTransactionsRepository(AppDatabase(NativeDatabase.memory())),
@@ -79,6 +86,7 @@ Widget _app({bool dark = false, bool firstLaunch = false}) => ProviderScope(
     clockProvider.overrideWithValue(() => demoNow),
     initialSettingsProvider.overrideWithValue({
       SettingKeys.themeMode: dark ? 'dark' : 'light',
+      SettingKeys.language: language,
     }),
     startupNeedsOnboardingProvider.overrideWithValue(firstLaunch),
     recentViewsProvider.overrideWith(
@@ -250,6 +258,21 @@ void main() {
     await tester.pumpAndSettle();
     await _tapText(tester, 'Income');
     await _shot(tester, 'add_income_light');
+  });
+
+  // Bangla: the UI, dates and amounts (Bangla numerals).
+  testWidgets('home bangla light', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_app(language: 'bn'));
+    await _shot(tester, 'home_bn_light');
+  });
+
+  testWidgets('insights bangla light', (tester) async {
+    await _phone(tester);
+    await tester.pumpWidget(_app(language: 'bn'));
+    await tester.pumpAndSettle();
+    await _tapText(tester, 'বিশ্লেষণ');
+    await _shot(tester, 'insights_bn_light');
   });
 
   testWidgets('accounts light', (tester) async {

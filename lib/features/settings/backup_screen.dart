@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../app/theme/theme.dart';
 import '../../app/theme/theme_mode_provider.dart';
 import '../../core/dates/week_start_provider.dart';
+import '../../core/locale/language_provider.dart';
 import '../../core/money/currency.dart';
 import '../../core/money/currency_provider.dart';
 import '../../core/widgets/poyshik_card.dart';
@@ -134,6 +135,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     ref
         .read(currencyProvider.notifier)
         .set(currencyFor(settings[SettingKeys.currency]));
+    ref
+        .read(languageProvider.notifier)
+        .set(AppLanguage.fromSetting(settings[SettingKeys.language]));
     ref.invalidate(_lastBackupProvider);
 
     messenger.showSnackBar(

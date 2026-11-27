@@ -1,4 +1,4 @@
-﻿{
+{
   "@@locale": "en",
   "appTitle": "Poyshik",
   "@appTitle": {
@@ -8,7 +8,6 @@
   "@appTagline": {
     "description": "Short product promise shown under the app name."
   },
-
   "tabHome": "Home",
   "tabActivity": "Activity",
   "tabInsights": "Insights",
@@ -21,7 +20,6 @@
   "activityEmptyMessage": "Everything you log will show up here, grouped by day.",
   "insightsEmptyTitle": "Insights need a little data",
   "insightsEmptyMessage": "Log a few expenses and your patterns will appear here.",
-
   "moreAccounts": "Accounts",
   "moreCategories": "Categories",
   "moreBudget": "Budget",
@@ -31,13 +29,17 @@
   "moreDesignSystem": "Design system",
   "moreDatabase": "Database",
   "comingSoon": "Soon",
-
   "accountsTitle": "Accounts",
   "accountsTotalBalance": "Total balance",
   "accountsArchived": "Archived",
   "accountsCount": "{count, plural, =1{Across 1 account} other{Across {count} accounts}}",
   "@accountsCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "accountsAdd": "Add account",
   "accountNew": "New account",
@@ -60,7 +62,6 @@
   "accountTypeMobileWallet": "Mobile wallet",
   "accountTypeCard": "Card",
   "accountTypeOther": "Other",
-
   "txExpense": "Expense",
   "txIncome": "Income",
   "txTransfer": "Transfer",
@@ -85,8 +86,13 @@
   "activityResults": "{count, plural, =1{1 result} other{{count} results}} · {spent} spent",
   "@activityResults": {
     "placeholders": {
-      "count": { "type": "int" },
-      "spent": { "type": "String" }
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "spent": {
+        "type": "String"
+      }
     }
   },
   "filterType": "Type",
@@ -117,34 +123,58 @@
   "insightsByCategory": "By category",
   "insightsDailyAverage": "Daily average {amount}",
   "@insightsDailyAverage": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "insightsBiggestDay": "Biggest day",
   "insightsEmptyPeriod": "Nothing logged in this period.",
   "insightTopCategory": "{category} was {percent}% of your spending.",
   "@insightTopCategory": {
     "placeholders": {
-      "category": { "type": "String" },
-      "percent": { "type": "int" }
+      "category": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "insightChange": "{percent}% {direction, select, more{more} other{less}} than last {period, select, week{week} other{month}}.",
   "@insightChange": {
     "placeholders": {
-      "percent": { "type": "int" },
-      "direction": { "type": "String" },
-      "period": { "type": "String" }
+      "percent": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "direction": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
     }
   },
   "insightDailyAverage": "About {amount} a day on average.",
   "@insightDailyAverage": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "insightBiggestDay": "Biggest day: {day}, {amount}.",
   "@insightBiggestDay": {
     "placeholders": {
-      "day": { "type": "String" },
-      "amount": { "type": "String" }
+      "day": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
     }
   },
   "welcomeTitle": "Know where your money goes.",
@@ -167,7 +197,11 @@
   "backupCreate": "Create backup",
   "backupLast": "Last backup: {date}",
   "@backupLast": {
-    "placeholders": { "date": { "type": "String" } }
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
   },
   "backupNever": "No backup yet",
   "backupSectionRestore": "Restore",
@@ -177,17 +211,33 @@
   "backupConfirmBody": "Backup from {date}: {accounts} accounts, {categories} categories, {transactions} transactions.\n\nEverything currently in Poyshik will be replaced. This can't be undone.",
   "@backupConfirmBody": {
     "placeholders": {
-      "date": { "type": "String" },
-      "accounts": { "type": "int" },
-      "categories": { "type": "int" },
-      "transactions": { "type": "int" }
+      "date": {
+        "type": "String"
+      },
+      "accounts": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "categories": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "transactions": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "backupConfirmAction": "Replace",
   "backupCancel": "Cancel",
   "backupRestored": "Restored {count} transactions",
   "@backupRestored": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "backupInvalid": "That file isn't a Poyshik backup.",
   "backupNewer": "This backup is from a newer version of Poyshik.",
@@ -196,7 +246,11 @@
   "backupExportCsv": "Export CSV",
   "backupFailed": "Something went wrong: {error}",
   "@backupFailed": {
-    "placeholders": { "error": { "type": "String" } }
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "settingsTitle": "Settings",
   "settingsAppearance": "Appearance",
@@ -210,7 +264,11 @@
   "settingsAbout": "About",
   "settingsVersion": "Version {version}",
   "@settingsVersion": {
-    "placeholders": { "version": { "type": "String" } }
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   },
   "settingsPrivacy": "Your data stays on this phone. No account, no cloud, no tracking.",
   "budgetTitle": "Monthly budget",
@@ -222,34 +280,61 @@
   "budgetSetPrompt": "Set a monthly budget",
   "budgetOf": "of {amount} budget",
   "@budgetOf": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "budgetSafeToSpend": "Safe to spend",
   "budgetPerDay": "/day",
   "budgetDaysLeft": "{count, plural, =1{Last day} other{{count} days left}}",
   "@budgetDaysLeft": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "budgetOver": "{amount} over budget",
   "@budgetOver": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "homeSpentThisMonth": "Spent in {month}",
   "@homeSpentThisMonth": {
-    "placeholders": { "month": { "type": "String" } }
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
   },
   "homeMoreThanLastMonth": "{percent}% more than last month by today",
   "@homeMoreThanLastMonth": {
-    "placeholders": { "percent": { "type": "int" } }
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "homeLessThanLastMonth": "{percent}% less than last month by today",
   "@homeLessThanLastMonth": {
-    "placeholders": { "percent": { "type": "int" } }
+    "placeholders": {
+      "percent": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "homeSameAsLastMonth": "Same pace as last month",
-  "homeGreetingMorning": "Good morning",
-  "homeGreetingAfternoon": "Good afternoon",
-  "homeGreetingEvening": "Good evening",
+  "homeGreetingMorning": "Good morning.",
+  "homeGreetingAfternoon": "Good afternoon.",
+  "homeGreetingEvening": "Good evening.",
   "homeIncome": "Income",
   "homeNet": "Net",
   "homeToday": "Today",
@@ -267,11 +352,19 @@
   "txTransferSame": "Pick two different accounts",
   "activitySpent": "{amount} spent",
   "@activitySpent": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "activityEarned": "{amount} in",
   "@activityEarned": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "@_builtInCategories": {},
   "catFood": "Food",
@@ -314,15 +407,30 @@
   "budgetsNoLimit": "No limit",
   "budgetsSpentOf": "{spent} of {limit}",
   "@budgetsSpentOf": {
-    "placeholders": { "spent": { "type": "String" }, "limit": { "type": "String" } }
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
   },
   "budgetsOverBy": "{amount} over",
   "@budgetsOverBy": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
   "budgetCategoryTitle": "{category} limit",
   "@budgetCategoryTitle": {
-    "placeholders": { "category": { "type": "String" } }
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
   },
   "budgetCategoryHelp": "The most you want to spend on this category each month.",
   "budgetCategoryAmount": "Limit per month",
@@ -330,7 +438,17 @@
   "budgetCategoryRemove": "Remove limit",
   "homeOfLimit": "of {amount}",
   "@homeOfLimit": {
-    "placeholders": { "amount": { "type": "String" } }
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
   },
-  "categoryNewShort": "New"
+  "categoryNewShort": "New",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageBangla": "বাংলা",
+  "settingsLanguageHelp": "Bangla also shows amounts and dates in Bangla digits.",
+  "errorLoading": "Something went wrong loading this."
 }

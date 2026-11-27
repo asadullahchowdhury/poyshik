@@ -383,7 +383,7 @@ class _DailyBarsCard extends StatelessWidget {
                             child: Text(
                               isWeek
                                   ? DateFormat.E().format(day).substring(0, 2)
-                                  : '${day.day}',
+                                  : MoneyFormat.digits('${day.day}'),
                               style: AppType.caption.copyWith(
                                 color: c.inkSubtle,
                               ),
@@ -570,7 +570,9 @@ class _CategoryDonutCardState extends State<_CategoryDonutCard> {
                   Text(
                     sum <= 0
                         ? ''
-                        : '${(cats[i].total.minor * 100 / sum).round()}%',
+                        : MoneyFormat.digits(
+                            '${(cats[i].total.minor * 100 / sum).round()}%',
+                          ),
                     style: AppType.caption.copyWith(color: c.inkMuted),
                   ),
                   const SizedBox(width: Space.md),

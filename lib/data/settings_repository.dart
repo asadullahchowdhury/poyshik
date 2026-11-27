@@ -11,6 +11,7 @@ abstract final class SettingKeys {
   static const lastBackupAt = 'last_backup_at';
   static const onboardingDone = 'onboarding_done';
   static const currency = 'currency';
+  static const language = 'language';
 }
 
 /// Small key-value store in the database, so backups include settings.

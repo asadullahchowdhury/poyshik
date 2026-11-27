@@ -116,7 +116,7 @@ class _Header extends StatelessWidget {
       children: [
         const PoyshikLogo(size: 22),
         const SizedBox(height: Space.xl),
-        Text('$greeting.', style: AppType.display.copyWith(color: c.ink)),
+        Text(greeting, style: AppType.display.copyWith(color: c.ink)),
         const SizedBox(height: Space.xs),
         Text(
           DateFormat('EEEE, d MMMM').format(now),
@@ -337,7 +337,7 @@ class _BudgetBlock extends StatelessWidget {
               ),
             ),
             Text(
-              '${(status.progress * 100).round()}%',
+              MoneyFormat.digits('${(status.progress * 100).round()}%'),
               style: AppType.label.copyWith(
                 color: c.onHero,
                 fontWeight: FontWeight.w600,

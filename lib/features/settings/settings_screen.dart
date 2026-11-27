@@ -6,6 +6,7 @@ import '../../app/app_info.dart';
 import '../../app/theme/theme.dart';
 import '../../app/theme/theme_mode_provider.dart';
 import '../../core/dates/week_start_provider.dart';
+import '../../core/locale/language_provider.dart';
 import '../../core/money/currency_provider.dart';
 import '../../core/widgets/poyshik_card.dart';
 import '../../l10n/app_localizations.dart';
@@ -25,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
     final theme = ref.watch(themeModeProvider);
     final weekStart = ref.watch(weekStartProvider);
     final currency = ref.watch(currencyProvider);
+    final language = ref.watch(languageProvider);
 
     Widget section(String title, List<Widget> children) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,6 +88,36 @@ class SettingsScreen extends ConsumerWidget {
                 onSelectionChanged: (s) =>
                     ref.read(themeModeProvider.notifier).set(s.first),
               ),
+            ),
+          ]),
+          section(l10n.settingsLanguage, [
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<AppLanguage>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: AppLanguage.system,
+                    label: Text(l10n.settingsLanguageSystem),
+                  ),
+                  ButtonSegment(
+                    value: AppLanguage.en,
+                    label: Text(l10n.settingsLanguageEnglish),
+                  ),
+                  ButtonSegment(
+                    value: AppLanguage.bn,
+                    label: Text(l10n.settingsLanguageBangla),
+                  ),
+                ],
+                selected: {language},
+                onSelectionChanged: (s) =>
+                    ref.read(languageProvider.notifier).set(s.first),
+              ),
+            ),
+            const SizedBox(height: Space.sm),
+            Text(
+              l10n.settingsLanguageHelp,
+              style: AppType.caption.copyWith(color: c.inkMuted),
             ),
           ]),
           section(l10n.settingsMoney, [

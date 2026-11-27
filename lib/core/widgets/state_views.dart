@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../app/theme/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'motion.dart';
 
 /// Calm placeholder while data loads: soft blocks that gently pulse.
@@ -55,7 +56,7 @@ class ErrorView extends StatelessWidget {
             Icon(Icons.cloud_off_rounded, size: 36, color: c.inkMuted),
             const SizedBox(height: Space.lg),
             Text(
-              'Something went wrong loading this.',
+              AppLocalizations.of(context).errorLoading,
               textAlign: TextAlign.center,
               style: AppType.titleMedium.copyWith(color: c.ink),
             ),
