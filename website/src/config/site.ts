@@ -8,7 +8,7 @@ export const site = {
   name: 'Poyshik',
   tagline: 'Every taka, accounted for.',
   description:
-    'Poyshik is a calm daily expense tracker for Android. Log an expense in about three seconds, see what is safe to spend, and understand where your money goes. Works offline, no account, your data stays on your phone.',
+    'Poyshik is a calm daily expense tracker for Android. Log an expense in about three seconds, see what is safe to spend, and understand where your money goes. Works offline, in English or Bangla, no account, your data stays on your phone.',
   /** The app is Android-only today. */
   platform: 'Android',
   download: {
