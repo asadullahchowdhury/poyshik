@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poyshik/core/money/money.dart';
 import 'package:poyshik/data/db/app_database.dart';
+import 'package:poyshik/data/settings_repository.dart';
+import 'package:poyshik/features/transactions/transactions_repository.dart';
 import 'package:poyshik/features/voice/voice_parser.dart';
 
 void main() {
@@ -121,5 +123,50 @@ void main() {
     expect(e.categoryId, isNull);
     expect(e.note, 'Hmm');
     expect(parse('   ').note, isNull);
+  });
+
+  test('picks the guess it understands best', () {
+    final e = bestVoiceEntry(
+      ['sell or e twenty thousand', 'salary 20000', 'salary twenty'],
+      categories: categories,
+      names: (c) => c.name,
+    );
+    expect(e.amount, const Money.taka(20000));
+    expect(keyOf[e.categoryId], 'salary');
+    expect(e.type, TransactionType.income);
+    // Equal guesses keep the recognizer's order.
+    final first = bestVoiceEntry(
+      ['tea 20', 'bus 20'],
+      categories: categories,
+      names: (c) => c.name,
+    );
+    expect(keyOf[first.categoryId], 'food');
+  });
+
+  test('rikshaw 50 tk (and other spellings)', () {
+    for (final said in ['rikshaw 50 tk', 'Rickshaw 50tk', 'riksha 50 taka']) {
+      check(said, amount: const Money.taka(50), category: 'transport');
+    }
+  });
+
+  test('salary 20000 fills income, salary and amount', () {
+    check(
+      'salary 20000',
+      amount: const Money.taka(20000),
+      category: 'salary',
+      type: TransactionType.income,
+    );
+  });
+
+  test('categories can be read once without anything watching', () async {
+    // Regression: a one-off read of the unwatched provider hung forever,
+    // so voice never filled the form.
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = TransactionsRepository(db, SettingsRepository(db));
+    final income = await repo
+        .categoriesByUsage(CategoryKind.income)
+        .timeout(const Duration(seconds: 3));
+    expect(income.map((c) => c.systemKey), contains('salary'));
+    await db.close();
   });
 }

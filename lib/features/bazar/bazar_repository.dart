@@ -116,6 +116,23 @@ List<BazarEntry> parseBazarItems(String input) {
   return items;
 }
 
+/// From the recognizer's guesses (best first), the one that reads as the
+/// most items with quantities. Ties keep the recognizer's order.
+String bestBazarText(List<String> heard) {
+  var best = heard.first;
+  var bestScore = -1;
+  for (final text in heard) {
+    final items = parseBazarItems(text);
+    final score =
+        items.length * 2 + items.where((i) => i.quantity != null).length;
+    if (score > bestScore) {
+      best = text;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 /// Splits "Rice 5 kg" into ("Rice", "5 kg"): the first item of
 /// [parseBazarItems], without its price.
 (String name, String? quantity) parseBazarEntry(String input) {

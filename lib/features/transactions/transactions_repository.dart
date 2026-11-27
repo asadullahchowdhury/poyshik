@@ -231,6 +231,11 @@ class TransactionsRepository {
 
   /// Active categories of [kind], most used first, then by sort order —
   /// so the categories you actually use sit within reach.
+  /// The same list, read once. Use this from event handlers: a one-off
+  /// read of an unwatched StreamProvider never completes in Riverpod 3.
+  Future<List<Category>> categoriesByUsage(CategoryKind kind) =>
+      watchCategoriesByUsage(kind).first;
+
   Stream<List<Category>> watchCategoriesByUsage(CategoryKind kind) {
     return _db
         .customSelect(

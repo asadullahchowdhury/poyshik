@@ -53,9 +53,11 @@ class _BazarScreenState extends ConsumerState<BazarScreen> {
   Future<void> _speak() async {
     final l10n = AppLocalizations.of(context);
     _focus.unfocus();
-    final spoken = await showVoiceSheet(context, hint: l10n.bazarVoiceHint);
-    if (spoken == null || !mounted) return;
-    final added = await ref.read(bazarRepositoryProvider).addFromText(spoken);
+    final heard = await showVoiceSheet(context, hint: l10n.bazarVoiceHint);
+    if (heard == null || heard.isEmpty || !mounted) return;
+    final added = await ref
+        .read(bazarRepositoryProvider)
+        .addFromText(bestBazarText(heard));
     if (!mounted) return;
     unawaited(HapticFeedback.mediumImpact());
     _snack(added == 0 ? l10n.bazarNothingHeard : l10n.bazarAdded(added));
@@ -100,9 +102,10 @@ class _BazarScreenState extends ConsumerState<BazarScreen> {
   Future<void> _logSpend(List<BazarItem> bought) async {
     final l10n = AppLocalizations.of(context);
     final estimate = bought.fold<int>(0, (sum, b) => sum + (b.estimate ?? 0));
-    final categories =
-        ref.read(categoriesByUsageProvider(CategoryKind.expense)).value ??
-        const [];
+    final categories = await ref
+        .read(transactionsRepositoryProvider)
+        .categoriesByUsage(CategoryKind.expense);
+    if (!mounted) return;
     final groceries = categories
         .where((c) => c.systemKey == 'groceries')
         .firstOrNull;
