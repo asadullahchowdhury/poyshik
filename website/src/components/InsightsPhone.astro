@@ -1,0 +1,256 @@
+---
+// The green section's phone. As the visitor scrolls past, the phone's own
+// screen scrolls through the whole Insights page (a tall render of the real
+// screen, demo data; screenshots/ "insights tall dark"), the device turns
+// slightly in 3D with a light sweep across the glass, and glass callouts light
+// up as each part of the screen goes by. Uses --p from data-progress="view",
+// so it adds no extra scroll length to the page.
+import { Image } from 'astro:assets';
+import Phone from './Phone.astro';
+import tall from '../assets/screens/insights_tall_dark.png';
+import nav from '../assets/screens/insights_dark.png';
+
+// q (inner scroll, 0→1) window in which each callout is lit.
+const callouts = [
+  {
+    title: 'Highlights in plain words',
+    text: 'Your top category, the change since last month, your daily average.',
+    from: -1,
+    to: 0.3,
+    side: 'left',
+    y: 24,
+  },
+  {
+    title: 'Your biggest day, flagged',
+    text: 'Every day against your average, the outlier in marigold.',
+    from: 0.3,
+    to: 0.62,
+    side: 'right',
+    y: 48,
+  },
+  {
+    title: 'Where every taka went',
+    text: 'Each category’s share and amount, largest first.',
+    from: 0.62,
+    to: 2,
+    side: 'left',
+    y: 72,
+  },
+];
+---
+
+<div class="iphone" data-progress="view" data-static="0.5">
+  <div class="iphone__glow" aria-hidden="true"></div>
+  <div class="iphone__device">
+    <Phone width={310}>
+      <div class="iphone__scroll">
+        <Image
+          src={tall}
+          alt="Poyshik Insights in dark mode: spending summary, highlights, a day-by-day chart and spending by category."
+          widths={[400, 620, 930]}
+          sizes="(max-width: 600px) 64vw, 310px"
+          format="webp"
+          quality={82}
+        />
+      </div>
+      <div class="iphone__nav" aria-hidden="true">
+        <Image src={nav} alt="" widths={[400, 620, 930]} sizes="310px" format="webp" quality={82} />
+      </div>
+      <span class="iphone__glare" aria-hidden="true"></span>
+    </Phone>
+  </div>
+
+  {callouts.map((c) => (
+    <div
+      class:list={['callout', `callout--${c.side}`]}
+      style={`--from:${c.from}; --to:${c.to}; --y:${c.y}%`}
+      aria-hidden="true"
+    >
+      <span class="callout__dot" />
+      <div>
+        <b>{c.title}</b>
+        <span>{c.text}</span>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .iphone {
+    --p: 0.5;
+    /* Inner scroll runs through the middle of the pass, so the page is
+       already moving when it starts and the end holds a moment. */
+    --q: clamp(0, calc((var(--p) - 0.24) / 0.46), 1);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    perspective: 1600px;
+  }
+
+  /* A slow marigold bloom behind the device. */
+  .iphone__glow {
+    position: absolute;
+    inset: 8% -10%;
+    background:
+      radial-gradient(
+        50% 40% at 50% calc(30% + var(--q) * 40%),
+        color-mix(in srgb, var(--marigold) 26%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        60% 50% at 50% 60%,
+        color-mix(in srgb, var(--sage) 18%, transparent),
+        transparent 75%
+      );
+    filter: blur(28px);
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  .iphone__device {
+    position: relative;
+    transform-style: preserve-3d;
+    /* Turns from slightly left-facing to slightly right-facing. */
+    transform: rotateY(calc((0.5 - var(--p)) * 22deg)) rotateX(calc((var(--p) - 0.5) * -8deg))
+      translateY(calc((0.5 - var(--p)) * 30px));
+    will-change: transform;
+  }
+  .iphone__device :global(.phone) {
+    width: min(310px, 40vh, 70vw);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(255, 255, 255, 0.08),
+      calc((var(--p) - 0.5) * -60px) 50px 90px -30px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(244, 238, 226, 0.06);
+  }
+
+  /* The screen's content: a tall render that scrolls inside the glass. The
+     44.5% stop shows the end of the category list just above the nav bar. */
+  .iphone__scroll {
+    position: absolute;
+    inset: 0 0 auto;
+    transform: translateY(calc(var(--q) * -44.5%));
+    will-change: transform;
+  }
+  .iphone__device :global(.iphone__scroll img) {
+    height: auto;
+    object-fit: initial;
+  }
+
+  /* The real bottom navigation, pinned like in the app. */
+  .iphone__nav {
+    position: absolute;
+    inset: auto 0 0;
+    height: 9.8%;
+    overflow: hidden;
+    z-index: 2;
+  }
+  .iphone__device :global(.iphone__nav img) {
+    position: absolute;
+    bottom: 0;
+    height: auto;
+    object-fit: initial;
+  }
+
+  /* A soft band of light that travels across the glass. */
+  .iphone__glare {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.09) 46%,
+      rgba(255, 255, 255, 0.02) 52%,
+      transparent 60%
+    );
+    background-size: 100% 260%;
+    background-position: 0 calc(100% - var(--p) * 100%);
+    mix-blend-mode: screen;
+  }
+
+  /* Glass callouts beside the device; each lights up with its part of the
+     screen, then settles back. */
+  .callout {
+    --on: min(
+      clamp(0, calc((var(--q) - var(--from)) * 14), 1),
+      clamp(0, calc((var(--to) - var(--q)) * 14), 1)
+    );
+    position: absolute;
+    top: var(--y);
+    z-index: 4;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    width: 210px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--forest-deep) 55%, transparent);
+    border: 1px solid rgba(244, 238, 226, calc(0.08 + var(--on) * 0.14));
+    box-shadow: 0 24px 48px -20px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    color: var(--on-forest);
+    font-size: 0.84rem;
+    line-height: 1.4;
+    opacity: var(--on);
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+  .callout--left {
+    right: calc(50% + min(155px, 20vh, 35vw) - 90px);
+    transform: translateX(calc((1 - var(--on)) * -14px));
+  }
+  .callout--right {
+    left: calc(50% + min(155px, 20vh, 35vw) - 90px);
+    transform: translateX(calc((1 - var(--on)) * 14px));
+  }
+  .callout b {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .callout span:not(.callout__dot) {
+    color: var(--on-forest-muted);
+  }
+  .callout__dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: var(--marigold);
+    box-shadow: 0 0 0 calc(var(--on) * 6px) color-mix(in srgb, var(--marigold) 22%, transparent);
+  }
+
+  /* Narrower screens have no room beside the device: callouts take turns
+     in one slot under it. */
+  @media (max-width: 1279px) {
+    .iphone {
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 110px;
+    }
+    .callout,
+    .callout--left,
+    .callout--right {
+      top: auto;
+      bottom: 0;
+      left: 50%;
+      right: auto;
+      width: min(320px, 86vw);
+      translate: -50% 0;
+      opacity: var(--on);
+      transform: translateY(calc((1 - var(--on)) * 10px));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .iphone__device {
+      transform: none;
+    }
+    .iphone__glare {
+      display: none;
+    }
+  }
+</style>

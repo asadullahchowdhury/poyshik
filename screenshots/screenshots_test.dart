@@ -56,6 +56,10 @@ class _DemoTransactionsRepository extends TransactionsRepository {
 
   @override
   Future<String?> defaultAccountId() async => 'cash';
+
+  /// Demo accounts aren't in the database, so saving only pretends.
+  @override
+  Future<String> add(TransactionDraft d) async => 'demo-saved';
 }
 
 Widget _app({bool dark = false, bool firstLaunch = false}) => ProviderScope(
@@ -165,6 +169,48 @@ void main() {
       await _shot(tester, 'add_$suffix');
     });
   }
+
+  // Frames for the website's scroll-scrubbed "How it works" scene: the
+  // empty sheet, each key press, the category pick, and the saved state.
+  testWidgets('add flow light', (tester) async {
+    // Tests draw shadows as solid black outlines by default; the saved
+    // frame shows a floating snackbar, so render real shadows here.
+    debugDisableShadows = false;
+    addTearDown(() => debugDisableShadows = true);
+    await _phone(tester);
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Add transaction'));
+    await _shot(tester, 'flow_0_open');
+    final typed = <String>[];
+    for (final k in ['3', '2', '0']) {
+      await tester.tap(find.text(k).last);
+      typed.add(k);
+      await _shot(tester, 'flow_${typed.length}_${typed.join()}');
+    }
+    await tester.tap(find.text('Food').first);
+    await _shot(tester, 'flow_4_food');
+    await tester.tap(find.text('Save').last);
+    // Hold on the confirmation instead of waiting for it to time out.
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await expectLater(
+      find.byType(PoyshikApp),
+      matchesGoldenFile('out/flow_5_saved.png'),
+    );
+  });
+
+  // A tall Insights screen for the website's green section, where the
+  // phone's screen scrolls through the whole page as the visitor scrolls.
+  testWidgets('insights tall dark', (tester) async {
+    await _phone(tester);
+    tester.view.physicalSize = const Size(1200, 5400);
+    await tester.pumpWidget(_app(dark: true));
+    await tester.pumpAndSettle();
+    await _tapText(tester, 'Insights');
+    await _shot(tester, 'insights_tall_dark');
+  });
 
   testWidgets('accounts light', (tester) async {
     await _phone(tester);

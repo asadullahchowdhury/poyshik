@@ -1,0 +1,314 @@
+---
+// "How it works" as a scroll-scrubbed scene: a tall section with a sticky
+// stage. As --p goes 0→1 the phone plays one real entry: tap +, type 3, 2, 0,
+// pick Food, save, back on Home with the confirmation. Each frame is the real
+// app rendered with demo data (screenshots/ "add flow light"); later frames
+// fade in over earlier ones, and a tap ring marks every touch. The steps on
+// the right light up with the phone.
+import { Image } from 'astro:assets';
+import Phone from './Phone.astro';
+import home from '../assets/screens/home_light.png';
+import open from '../assets/screens/flow_0_open.png';
+import typed3 from '../assets/screens/flow_1_3.png';
+import typed32 from '../assets/screens/flow_2_32.png';
+import typed320 from '../assets/screens/flow_3_320.png';
+import food from '../assets/screens/flow_4_food.png';
+import saved from '../assets/screens/flow_5_saved.png';
+
+// at: progress where the frame starts fading in. Taps: where the finger
+// lands (as % of the screen) and when.
+const frames = [
+  { src: home, at: -1 },
+  { src: open, at: 0.1, rise: true },
+  { src: typed3, at: 0.25 },
+  { src: typed32, at: 0.33 },
+  { src: typed320, at: 0.41 },
+  { src: food, at: 0.52 },
+  { src: saved, at: 0.68 },
+];
+const taps = [
+  { x: 50, y: 94, at: 0.07 }, // +
+  { x: 80.6, y: 64.5, at: 0.23 }, // 3
+  { x: 49.9, y: 64.5, at: 0.31 }, // 2
+  { x: 49.9, y: 87.4, at: 0.39 }, // 0
+  { x: 14.4, y: 36.7, at: 0.5 }, // Food
+  { x: 50, y: 95.1, at: 0.645 }, // Save
+];
+const steps = [
+  {
+    title: 'Tap +',
+    text: 'The entry sheet opens over any screen, with a keypad built for amounts.',
+    from: -1,
+    to: 0.18,
+  },
+  {
+    title: 'Type the amount, pick a category',
+    text: 'Categories you use most sit up front. Add a note or another date only if you want.',
+    from: 0.18,
+    to: 0.6,
+  },
+  {
+    title: 'Save, and watch the month update',
+    text: 'Balances, budget and insights refresh instantly. Made a mistake? Undo is one tap.',
+    from: 0.6,
+    to: 2,
+  },
+];
+---
+
+<section
+  class="flow"
+  id="how"
+  data-progress="sticky"
+  data-static="0.56"
+  aria-labelledby="flow-title"
+>
+  <div class="flow__stage">
+    <div class="container flow__grid">
+      <div class="flow__phone">
+        <Phone width={300}>
+          {frames.map((f, i) => (
+            <div
+              class:list={['flow__frame', { 'flow__frame--rise': f.rise }]}
+              style={`--at:${f.at}`}
+              aria-hidden={i === frames.length - 2 ? undefined : 'true'}
+            >
+              <Image
+                src={f.src}
+                alt={
+                  i === frames.length - 2
+                    ? 'Adding a ৳320 Food expense in Poyshik: amount on a keypad, category picked, ready to save.'
+                    : ''
+                }
+                widths={[360, 540, 720]}
+                sizes="(max-width: 600px) 60vw, 300px"
+                format="webp"
+                quality={82}
+              />
+            </div>
+          ))}
+          {taps.map((t) => (
+            <span
+              class="flow__tap"
+              style={`--x:${t.x}%; --y:${t.y}%; --at:${t.at}`}
+              aria-hidden="true"
+            />
+          ))}
+        </Phone>
+      </div>
+
+      <div class="flow__copy">
+        <p class="eyebrow">How it works</p>
+        <h2 class="display h2" id="flow-title">
+          Amount. Category.
+          <br />
+          <span class="italic-accent">Done.</span>
+        </h2>
+        <p class="lede">
+          Logging is the habit, so Poyshik makes it nearly effortless. The account you used last and
+          today’s date are already filled in.
+        </p>
+        <ol class="flow__steps">
+          {steps.map((s, i) => (
+            <li style={`--from:${s.from}; --to:${s.to}`}>
+              <span class="flow__n">{i + 1}</span>
+              <div>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .flow {
+    /* Without JS (or before it runs) show the finished entry. */
+    --p: 0.56;
+    position: relative;
+    height: 320vh;
+  }
+  .flow__stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    display: grid;
+    align-items: center;
+    overflow: hidden;
+  }
+  .flow__grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: clamp(40px, 7vw, 110px);
+    align-items: center;
+  }
+
+  /* Phone: a gentle push-in while the entry plays. */
+  .flow__phone {
+    display: flex;
+    justify-content: center;
+    transform: translateY(calc((1 - min(var(--p) * 6, 1)) * 40px))
+      scale(calc(0.96 + min(var(--p) * 6, 1) * 0.04));
+  }
+  .flow__phone :global(.phone) {
+    /* Size by viewport height so the whole phone always fits the stage. */
+    width: min(300px, 38vh, 72vw);
+  }
+  .flow__frame {
+    position: absolute;
+    inset: 0;
+    opacity: clamp(0, calc((var(--p) - var(--at)) * 22), 1);
+  }
+  .flow__frame:first-child {
+    opacity: 1;
+  }
+  /* The sheet rises into place as it appears. */
+  .flow__frame--rise {
+    transform: translateY(calc((1 - clamp(0, calc((var(--p) - var(--at)) * 14), 1)) * 9%));
+  }
+
+  /* A soft ring wherever the finger lands, peaking at its moment. */
+  .flow__tap {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: 17%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--marigold) 32%, transparent);
+    border: 2px solid color-mix(in srgb, var(--marigold) 70%, transparent);
+    pointer-events: none;
+    z-index: 3;
+    translate: -50% -50%;
+    --life: min(
+      clamp(0, calc((var(--p) - var(--at) + 0.035) * 40), 1),
+      clamp(0, calc((var(--at) + 0.035 - var(--p)) * 40), 1)
+    );
+    opacity: var(--life);
+    transform: scale(calc(0.55 + (var(--p) - var(--at) + 0.035) * 8));
+  }
+
+  /* Steps: the current one is lit, the others recede. */
+  .flow__steps {
+    list-style: none;
+    padding: 0;
+    margin: 36px 0 0;
+    display: grid;
+    gap: 22px;
+  }
+  .flow__steps li {
+    --on: min(
+      clamp(0, calc((var(--p) - var(--from)) * 25), 1),
+      clamp(0, calc((var(--to) - var(--p)) * 25), 1)
+    );
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    opacity: calc(0.38 + var(--on) * 0.62);
+    transform: translateX(calc(var(--on) * 6px));
+  }
+  .flow__n {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--forest) calc(var(--on) * 100%), var(--sand));
+    color: color-mix(in srgb, var(--on-forest) calc(var(--on) * 100%), var(--ink-muted));
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    box-shadow: 0 0 0 calc(var(--on) * 5px) color-mix(in srgb, var(--marigold) 28%, transparent);
+  }
+  .flow__steps h3 {
+    margin: 2px 0 4px;
+    font-size: 1.05rem;
+  }
+  .flow__steps p {
+    margin: 0;
+    color: var(--ink-muted);
+  }
+
+  /* Short screens: drop the intro paragraph so the steps still fit. */
+  @media (max-height: 760px) and (min-width: 961px) {
+    .flow .lede {
+      display: none;
+    }
+  }
+
+  /* Phones: copy above, phone below; only the current step shows. */
+  @media (max-width: 960px) {
+    .flow {
+      height: 260vh;
+    }
+    .flow__grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      text-align: center;
+    }
+    .flow__stage {
+      /* Clear the fixed header. */
+      padding-top: 64px;
+    }
+    .flow__copy {
+      order: -1;
+    }
+    .flow__copy .eyebrow {
+      justify-content: center;
+    }
+    .flow .lede {
+      display: none;
+    }
+    .flow__steps {
+      margin-top: 14px;
+      display: grid;
+      grid-template-areas: 'step';
+      min-height: 4.6em;
+    }
+    .flow__steps li {
+      grid-area: step;
+      justify-content: center;
+      text-align: left;
+      opacity: var(--on);
+      transform: translateY(calc((1 - var(--on)) * 10px));
+    }
+    .flow__steps p {
+      display: none;
+    }
+    .flow__phone :global(.phone) {
+      width: min(260px, 28vh, 62vw);
+    }
+  }
+
+  /* Reduced motion: an ordinary section with every step readable. */
+  @media (prefers-reduced-motion: reduce) {
+    .flow {
+      height: auto;
+      padding: clamp(80px, 12vw, 140px) 0;
+    }
+    .flow__stage {
+      position: relative;
+      height: auto;
+    }
+    .flow__steps li {
+      --on: 1;
+      opacity: 1;
+      transform: none;
+    }
+    @media (max-width: 960px) {
+      .flow__steps {
+        grid-template-areas: none;
+      }
+      .flow__steps li {
+        grid-area: auto;
+      }
+      .flow__steps p {
+        display: block;
+      }
+    }
+  }
+</style>
