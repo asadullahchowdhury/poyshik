@@ -13,9 +13,13 @@ import '../../l10n/app_localizations.dart';
 /// Speech recognition is done by the phone (Google's recognizer on most
 /// Android phones); Poyshik only receives the text.
 /// [hint] replaces the default example phrase.
-Future<String?> showVoiceSheet(BuildContext context, {String? hint}) {
-  return showModalBottomSheet<String>(
+///
+/// Returns the recognizer's guesses, best first (callers pick the one they
+/// understand best), or null if cancelled.
+Future<List<String>?> showVoiceSheet(BuildContext context, {String? hint}) {
+  return showModalBottomSheet<List<String>>(
     context: context,
+    isScrollControlled: true,
     useSafeArea: true,
     builder: (_) => _VoiceSheet(hint: hint),
   );
@@ -36,8 +40,25 @@ class _VoiceSheetState extends State<_VoiceSheet> {
   // One recognizer for the app: initialising is slow and asks permission.
   static final _speech = SpeechToText();
 
+  /// The language last used, so a Bangla speaker on an English app only
+  /// switches once.
+  static _Lang? _remembered;
+
+  /// Set once this phone's recognizer turns Bangla down (many Android
+  /// speech services don't offer it to apps). Bangla then goes straight to
+  /// keyboard mode: Gboard's own mic understands Bangla.
+  static bool _bnUnavailable = false;
+
+  /// What was heard, editable: fix a misheard word before using it.
+  final _edit = TextEditingController();
+  final _editFocus = FocusNode();
+  bool _edited = false;
+  bool _keyboardMode = false;
+  DateTime? _listenStarted;
+
   late _Lang _lang;
   String _text = '';
+  List<String> _guesses = const [];
   String? _error;
   String? _notice;
   bool _listening = false;
@@ -49,9 +70,11 @@ class _VoiceSheetState extends State<_VoiceSheet> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _lang = Localizations.localeOf(context).languageCode == 'bn'
-          ? _Lang.bn
-          : _Lang.en;
+      _lang =
+          _remembered ??
+          (Localizations.localeOf(context).languageCode == 'bn'
+              ? _Lang.bn
+              : _Lang.en);
       unawaited(_start());
     });
     _lang = _Lang.en;
@@ -60,23 +83,44 @@ class _VoiceSheetState extends State<_VoiceSheet> {
   @override
   void dispose() {
     unawaited(_speech.cancel());
+    _finish?.cancel();
+    _edit.dispose();
+    _editFocus.dispose();
     super.dispose();
+  }
+
+  /// Bangla without the phone's recognizer: type, or use the keyboard's mic.
+  void _enterKeyboardMode() {
+    unawaited(_speech.cancel());
+    _finish?.cancel();
+    setState(() {
+      _keyboardMode = true;
+      _listening = false;
+      _error = null;
+    });
+    _editFocus.requestFocus();
   }
 
   Future<void> _start() async {
     final l10n = AppLocalizations.of(context);
+    if (_lang == _Lang.bn && _bnUnavailable) {
+      _enterKeyboardMode();
+      return;
+    }
     setState(() {
       _text = '';
+      _guesses = const [];
       _error = null;
+      _keyboardMode = false;
+      _edited = false;
+      _edit.clear();
     });
-    final ok = await _speech.initialize(
-      onError: _onError,
-      onStatus: (status) {
-        if (!mounted) return;
-        setState(() => _listening = status == SpeechToText.listeningStatus);
-        if (status == SpeechToText.doneStatus) _finishSoon();
-      },
-    );
+    final ok = await _speech.initialize(onError: _onError, onStatus: _onStatus);
+    // The recognizer is shared and initialize() only registers callbacks
+    // the first time; point them at this sheet every time.
+    _speech
+      ..errorListener = _onError
+      ..statusListener = _onStatus;
     if (!mounted) return;
     if (!ok) {
       final denied = !await _speech.hasPermission;
@@ -97,16 +141,23 @@ class _VoiceSheetState extends State<_VoiceSheet> {
       _enLocale = find('en_') ?? find('en');
     }
     if (!mounted) return;
-    var localeId = _lang == _Lang.bn ? _bnLocale : _enLocale;
-    if (_lang == _Lang.bn && _bnLocale == null) {
-      _notice = l10n.voiceBanglaMissing;
-      localeId = _enLocale;
-    }
+    // Many phones don't list Bangla even though Google's online recognizer
+    // understands it, so ask for bn_BD anyway; an unsupported-language
+    // error falls back to English (see _onError).
+    final localeId = _lang == _Lang.bn ? (_bnLocale ?? 'bn_BD') : _enLocale;
     unawaited(HapticFeedback.selectionClick());
+    _listenStarted = DateTime.now();
     await _speech.listen(
       onResult: (r) {
         if (!mounted) return;
-        setState(() => _text = r.recognizedWords);
+        setState(() {
+          _text = r.recognizedWords;
+          if (!_edited) _edit.text = r.recognizedWords;
+          _guesses = {
+            r.recognizedWords.trim(),
+            for (final a in r.alternates) a.recognizedWords.trim(),
+          }.where((g) => g.isNotEmpty).toList();
+        });
         if (r.finalResult) _finishSoon();
       },
       listenOptions: SpeechListenOptions(
@@ -120,9 +171,31 @@ class _VoiceSheetState extends State<_VoiceSheet> {
     );
   }
 
+  void _onStatus(String status) {
+    if (!mounted) return;
+    setState(() => _listening = status == SpeechToText.listeningStatus);
+    if (status == SpeechToText.doneStatus) _finishSoon();
+  }
+
   void _onError(SpeechRecognitionError e) {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
+    // A recognizer without Bangla either says so, or (Speech Services by
+    // Google) ends within a moment reporting no speech, before anyone
+    // could talk. Either way: keyboard mode, remembered for this run.
+    final instant =
+        _listenStarted != null &&
+        DateTime.now().difference(_listenStarted!) <
+            const Duration(milliseconds: 1500);
+    if (_lang == _Lang.bn &&
+        (e.errorMsg.contains('language') ||
+            (instant &&
+                (e.errorMsg.contains('no_match') ||
+                    e.errorMsg.contains('speech_timeout'))))) {
+      _bnUnavailable = true;
+      _enterKeyboardMode();
+      return;
+    }
     setState(() {
       _listening = false;
       _error = e.errorMsg.contains('permission')
@@ -131,15 +204,26 @@ class _VoiceSheetState extends State<_VoiceSheet> {
     });
   }
 
+  /// What to hand back: the user's own text if they typed or fixed it,
+  /// otherwise every recognizer guess, best first.
+  List<String> get _result {
+    final typed = _edit.text.trim();
+    if (_edited || _keyboardMode || _guesses.isEmpty) {
+      return [if (typed.isNotEmpty) typed];
+    }
+    return _guesses;
+  }
+
   Timer? _finish;
 
   /// Closes with the result a moment after speech ends, so the user sees
   /// what was heard.
   void _finishSoon() {
-    if (_text.trim().isEmpty) return;
+    // Never close under someone who is fixing or typing the text.
+    if (_text.trim().isEmpty || _edited || _keyboardMode) return;
     _finish?.cancel();
     _finish = Timer(const Duration(milliseconds: 600), () {
-      if (mounted) Navigator.pop(context, _text.trim());
+      if (mounted) Navigator.pop(context, _result);
     });
   }
 
@@ -147,9 +231,11 @@ class _VoiceSheetState extends State<_VoiceSheet> {
     if (lang == _lang) return;
     _finish?.cancel();
     await _speech.cancel();
+    _remembered = lang;
     setState(() {
       _lang = lang;
       _notice = null;
+      _keyboardMode = false;
     });
     await _start();
   }
@@ -158,13 +244,13 @@ class _VoiceSheetState extends State<_VoiceSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = context.colors;
-    final hasText = _text.trim().isNotEmpty;
+    final hasText = _edit.text.trim().isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         Space.screen,
         Space.md,
         Space.screen,
-        Space.xl,
+        Space.xl + MediaQuery.viewInsetsOf(context).bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -179,25 +265,55 @@ class _VoiceSheetState extends State<_VoiceSheet> {
             onSelectionChanged: (s) => unawaited(_switch(s.first)),
           ),
           const SizedBox(height: Space.xxl),
-          _MicOrb(active: _listening, color: c.brand, onColor: c.onBrand),
-          const SizedBox(height: Space.xl),
-          AnimatedSwitcher(
-            duration: Motion.fast,
-            child: Text(
-              _error ??
-                  (hasText
-                      ? _text
-                      : _listening
-                      ? l10n.voiceListening
-                      : l10n.voiceSpeak),
-              key: ValueKey('$_error$_text$_listening'),
+          if (_keyboardMode) ...[
+            Icon(Icons.keyboard_voice_rounded, size: 44, color: c.brand),
+            const SizedBox(height: Space.md),
+            Text(
+              l10n.voiceKeyboardTitle,
               textAlign: TextAlign.center,
-              style: hasText && _error == null
-                  ? AppType.titleMedium.copyWith(color: c.ink)
-                  : AppType.body.copyWith(
-                      color: _error == null ? c.inkMuted : c.expense,
-                    ),
+              style: AppType.bodyStrong.copyWith(color: c.ink),
             ),
+            const SizedBox(height: Space.xs),
+            Text(
+              l10n.voiceKeyboardBody,
+              textAlign: TextAlign.center,
+              style: AppType.caption.copyWith(color: c.inkMuted),
+            ),
+          ] else ...[
+            _MicOrb(active: _listening, color: c.brand, onColor: c.onBrand),
+            const SizedBox(height: Space.md),
+            AnimatedSwitcher(
+              duration: Motion.fast,
+              child: Text(
+                _error ?? (_listening ? l10n.voiceListening : l10n.voiceSpeak),
+                key: ValueKey('$_error$_listening'),
+                textAlign: TextAlign.center,
+                style: AppType.body.copyWith(
+                  color: _error == null ? c.inkMuted : c.expense,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: Space.lg),
+          TextField(
+            controller: _edit,
+            focusNode: _editFocus,
+            minLines: 1,
+            maxLines: 3,
+            textAlign: TextAlign.center,
+            textCapitalization: TextCapitalization.sentences,
+            style: AppType.titleMedium.copyWith(color: c.ink),
+            decoration: InputDecoration(
+              hintText: _keyboardMode
+                  ? l10n.voiceKeyboardHint
+                  : l10n.voiceEditHint,
+              hintMaxLines: 2,
+            ),
+            onTap: () => _finish?.cancel(),
+            onChanged: (_) {
+              _finish?.cancel();
+              setState(() => _edited = true);
+            },
           ),
           const SizedBox(height: Space.sm),
           Text(
@@ -225,7 +341,7 @@ class _VoiceSheetState extends State<_VoiceSheet> {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: hasText
-                      ? () => Navigator.pop(context, _text.trim())
+                      ? () => Navigator.pop(context, _result)
                       : null,
                   icon: const Icon(Icons.check_rounded),
                   label: Text(l10n.voiceUse),

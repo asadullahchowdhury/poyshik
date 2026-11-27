@@ -670,5 +670,9 @@
       }
     }
   },
-  "bazarNothingHeard": "Couldn't find items in that. Try again."
+  "bazarNothingHeard": "Couldn't find items in that. Try again.",
+  "voiceEditHint": "What you said appears here. You can fix it.",
+  "voiceKeyboardTitle": "This phone can't listen in Bangla directly",
+  "voiceKeyboardBody": "Tap the 🎤 on your keyboard and speak Bangla (Gboard understands it), or just type.",
+  "voiceKeyboardHint": "e.g. চা বিশ টাকা"
 }

@@ -43,6 +43,13 @@ void main() {
     expect(parse('rice 5 kg 450'), [('rice', '5 kg', 45000)]);
   });
 
+  test('picks the guess that reads as the most items', () {
+    expect(
+      bestBazarText(['chalk 5 kg dial', 'chal 5 kg dal 2 kg', 'shall 5']),
+      'chal 5 kg dal 2 kg',
+    );
+  });
+
   group('repository', () {
     late AppDatabase db;
     late BazarRepository repo;

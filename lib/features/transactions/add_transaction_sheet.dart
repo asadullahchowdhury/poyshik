@@ -123,15 +123,16 @@ class _EntrySheetState extends ConsumerState<_EntrySheet> {
   /// until the user checks it and taps Save.
   Future<void> _voice() async {
     final l10n = AppLocalizations.of(context);
-    final spoken = await showVoiceSheet(context);
-    if (spoken == null || !mounted) return;
+    final heard = await showVoiceSheet(context);
+    if (heard == null || heard.isEmpty || !mounted) return;
+    final repo = ref.read(transactionsRepositoryProvider);
     final categories = [
-      ...await ref.read(categoriesByUsageProvider(CategoryKind.expense).future),
-      ...await ref.read(categoriesByUsageProvider(CategoryKind.income).future),
+      ...await repo.categoriesByUsage(CategoryKind.expense),
+      ...await repo.categoriesByUsage(CategoryKind.income),
     ];
     if (!mounted) return;
-    final e = parseVoiceEntry(
-      spoken,
+    final e = bestVoiceEntry(
+      heard,
       categories: categories,
       names: (c) => c.label(l10n),
     );

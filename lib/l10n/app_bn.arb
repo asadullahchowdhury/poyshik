@@ -329,5 +329,9 @@
   "bazarAddPrice": "দাম যোগ",
   "bazarVoiceHint": "যেমন বলুন “চাল ৫ কেজি, ডাল ২ কেজি আর তেল ১ লিটার”",
   "bazarAdded": "{count}টি আইটেম যোগ হয়েছে",
-  "bazarNothingHeard": "কোনো আইটেম পাওয়া যায়নি। আবার বলুন।"
+  "bazarNothingHeard": "কোনো আইটেম পাওয়া যায়নি। আবার বলুন।",
+  "voiceEditHint": "যা বললেন এখানে দেখাবে। ঠিক করে নিতে পারেন।",
+  "voiceKeyboardTitle": "এই ফোন সরাসরি বাংলা শুনতে পারে না",
+  "voiceKeyboardBody": "কিবোর্ডের 🎤 চেপে বাংলায় বলুন (Gboard বোঝে), অথবা টাইপ করুন।",
+  "voiceKeyboardHint": "যেমন: চা বিশ টাকা"
 }

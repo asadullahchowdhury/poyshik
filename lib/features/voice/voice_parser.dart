@@ -51,6 +51,28 @@ VoiceEntry parseVoiceEntry(
   );
 }
 
+/// The recognizer's guesses, best first. Picks the guess that yields the
+/// most usable entry (an amount counts most, then a category), so a
+/// slightly lower-ranked but sensible transcription wins over a garbled
+/// top one. Ties keep the recognizer's order.
+VoiceEntry bestVoiceEntry(
+  List<String> heard, {
+  required List<Category> categories,
+  required String Function(Category) names,
+}) {
+  VoiceEntry? best;
+  var bestScore = -1;
+  for (final text in heard) {
+    final e = parseVoiceEntry(text, categories: categories, names: names);
+    final score = (e.amount != null ? 2 : 0) + (e.categoryId != null ? 1 : 0);
+    if (score > bestScore) {
+      best = e;
+      bestScore = score;
+    }
+  }
+  return best ?? (type: null, amount: null, categoryId: null, note: null);
+}
+
 // ------------------------------------------------------------ text --
 
 /// Bangla য়/ড়/ঢ় can be typed as one code point or as letter + nukta.
@@ -170,7 +192,18 @@ const _keywordWords = <String, List<String>>{
     'মাছ', 'মাংস', 'ডিম', 'দুধ',
   ],
   'transport': [
-    'rickshaw', 'bus', 'cng', 'uber', 'pathao', 'taxi', 'train', 'fuel', //
+    'rickshaw',
+    'rikshaw',
+    'riksha',
+    'ricksha',
+    'rickshaws',
+    'bus',
+    'cng',
+    'uber',
+    'pathao',
+    'taxi',
+    'train',
+    'fuel', //
     'petrol', 'fare', 'transport', 'রিকশা', 'রিক্সা', 'বাস', 'সিএনজি',
     'উবার', 'পাঠাও', 'ট্রেন', 'যাতায়াত', 'পেট্রোল',
   ],
