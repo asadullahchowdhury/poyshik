@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'app_icons.dart';
+
 /// A category's icon on a rounded square tinted with the category color.
 class CategoryIcon extends StatelessWidget {
   const CategoryIcon({
@@ -23,7 +25,14 @@ class CategoryIcon extends StatelessWidget {
         color: color.withValues(alpha: isDark ? 0.2 : 0.14),
         borderRadius: BorderRadius.circular(size * 0.32),
       ),
-      child: Icon(icon, color: color, size: size * 0.5),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (AppIcons.secondaryOf(icon) case final fill?)
+            Icon(fill, color: color.withValues(alpha: 0.3), size: size * 0.56),
+          Icon(icon, color: color, size: size * 0.56),
+        ],
+      ),
     );
   }
 }

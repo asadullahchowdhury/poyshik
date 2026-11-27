@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/widgets/motion.dart';
+import '../../core/widgets/phosphor.dart';
 import '../../features/transactions/add_transaction_sheet.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/theme.dart';
@@ -46,6 +47,9 @@ class AppShell extends StatelessWidget {
   }
 }
 
+/// A floating bar on the page background: a rounded surface with a soft
+/// shadow, a pill that glides to the active tab, filled icons for the active
+/// tab and outlines for the rest, and a raised marigold add button.
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.currentIndex,
@@ -62,42 +66,98 @@ class _BottomBar extends StatelessWidget {
   final String addLabel;
 
   static const _icons = [
-    (Icons.home_outlined, Icons.home_rounded),
-    (Icons.receipt_long_outlined, Icons.receipt_long_rounded),
-    (Icons.insights_outlined, Icons.insights_rounded),
-    (Icons.grid_view_outlined, Icons.grid_view_rounded),
+    (PhRegular.house, PhFill.house),
+    (PhRegular.receipt, PhFill.receipt),
+    (PhRegular.chartDonut, PhFill.chartDonut),
+    (PhRegular.squaresFour, PhFill.squaresFour),
   ];
+
+  /// Slot of each tab in the five-slot row (the add button is slot 2).
+  static const _slots = [0, 1, 3, 4];
+
+  static const _barHeight = 66.0;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    Widget tab(int i) => Expanded(
-      child: _TabItem(
-        label: labels[i],
-        icon: _icons[i].$1,
-        selectedIcon: _icons[i].$2,
-        selected: currentIndex == i,
-        onTap: () => onTab(i),
-      ),
-    );
+    final slot = _slots[currentIndex];
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: c.surface,
-        border: Border(top: BorderSide(color: c.hairline)),
-      ),
+    return ColoredBox(
+      color: c.background,
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              tab(0),
-              tab(1),
-              Expanded(child: Center(child: _AddButton(onAdd, addLabel))),
-              tab(2),
-              tab(3),
-            ],
+        minimum: const EdgeInsets.only(bottom: Space.sm),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Space.lg,
+            Space.md,
+            Space.lg,
+            Space.xs,
+          ),
+          child: SizedBox(
+            height: _barHeight,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // The bar surface.
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: c.surface,
+                      borderRadius: BorderRadius.circular(Radii.pill),
+                      border: Border.all(color: c.hairline),
+                      boxShadow: [
+                        BoxShadow(
+                          color: c.shadow,
+                          blurRadius: 28,
+                          offset: const Offset(0, 6),
+                          spreadRadius: -12,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // The active pill, gliding between tabs.
+                Positioned.fill(
+                  child: AnimatedAlign(
+                    duration: Motion.reduced(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 380),
+                    curve: Curves.easeOutBack,
+                    alignment: Alignment(-1 + slot * 0.5, 0),
+                    child: FractionallySizedBox(
+                      widthFactor: 0.2,
+                      child: Center(
+                        child: Container(
+                          width: 58,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: c.brand.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(Radii.pill),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    for (var s = 0; s < 5; s++)
+                      Expanded(
+                        child: s == 2
+                            ? _AddButton(onAdd, addLabel)
+                            : _TabItem(
+                                label: labels[_slots.indexOf(s)],
+                                icon: _icons[_slots.indexOf(s)].$1,
+                                selectedIcon: _icons[_slots.indexOf(s)].$2,
+                                selected: slot == s,
+                                onTap: () => onTab(_slots.indexOf(s)),
+                              ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -127,43 +187,37 @@ class _TabItem extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      child: InkResponse(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        radius: 32,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // A soft pill grows behind the active icon.
-            AnimatedContainer(
-              duration: Motion.base,
-              curve: Motion.curve,
-              width: selected ? 52 : 32,
-              height: 28,
-              decoration: BoxDecoration(
-                color: selected
-                    ? c.brand.withValues(alpha: 0.10)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(Radii.pill),
-              ),
-              child: AnimatedSwitcher(
+        child: Pressable(
+          scale: 0.9,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedSwitcher(
                 duration: Motion.fast,
+                transitionBuilder: (child, a) =>
+                    ScaleTransition(scale: a, child: child),
                 child: Icon(
                   selected ? selectedIcon : icon,
                   key: ValueKey(selected),
                   color: color,
-                  size: 22,
+                  size: 26,
                 ),
               ),
-            ),
-            const SizedBox(height: Space.xxs + 1),
-            Text(
-              label,
-              style: AppType.caption.copyWith(
-                color: color,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              const SizedBox(height: 3),
+              AnimatedDefaultTextStyle(
+                duration: Motion.fast,
+                style: AppType.caption.copyWith(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+                child: Text(label, maxLines: 1, overflow: TextOverflow.fade),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -179,32 +233,38 @@ class _AddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    return Tooltip(
-      message: label,
-      child: Pressable(
-        scale: 0.94,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Radii.md + 2),
-            boxShadow: [
-              BoxShadow(
-                color: c.accent.withValues(alpha: 0.35),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-                spreadRadius: -4,
+    // Raised above the top edge of the bar, ringed in the page colour.
+    return Transform.translate(
+      offset: const Offset(0, -14),
+      child: Center(
+        child: Tooltip(
+          message: label,
+          child: Pressable(
+            scale: 0.92,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: c.background,
+                boxShadow: [
+                  BoxShadow(
+                    color: c.accent.withValues(alpha: 0.45),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                    spreadRadius: -4,
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Material(
-            color: c.accent,
-            borderRadius: BorderRadius.circular(Radii.md + 2),
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(Radii.md + 2),
-              child: SizedBox(
-                width: 54,
-                height: 44,
-                child: Icon(Icons.add_rounded, color: c.onAccent, size: 28),
+              padding: const EdgeInsets.all(4),
+              child: Material(
+                color: c.accent,
+                shape: const CircleBorder(),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onTap,
+                  child: Icon(PhBold.plus, color: c.onAccent, size: 24),
+                ),
               ),
             ),
           ),

@@ -43,6 +43,14 @@ Future<void> _loadFonts() async {
   await _loadFont('InstrumentSerif', [
     'assets/fonts/instrument_serif/InstrumentSerif-Regular.ttf',
   ]);
+  for (final (family, file) in [
+    ('PhosphorRegular', 'Phosphor-Regular.ttf'),
+    ('PhosphorFill', 'Phosphor-Fill.ttf'),
+    ('PhosphorBold', 'Phosphor-Bold.ttf'),
+    ('PhosphorDuotone', 'Phosphor-Duotone.ttf'),
+  ]) {
+    await _loadFont(family, ['assets/fonts/phosphor/$file']);
+  }
   final flutterRoot = Platform.environment['FLUTTER_ROOT'] ?? r'D:\dev\flutter';
   await _loadFont('MaterialIcons', [
     '$flutterRoot/bin/cache/artifacts/material_fonts/materialicons-regular.otf',

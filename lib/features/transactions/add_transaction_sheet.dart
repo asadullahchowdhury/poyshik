@@ -643,15 +643,15 @@ class _CategoryTile extends StatelessWidget {
             ),
             child: dashed
                 ? Container(
-                    width: 46,
-                    height: 46,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(46 * 0.32),
+                      borderRadius: BorderRadius.circular(48 * 0.32),
                       border: Border.all(color: c.hairline, width: 1.5),
                     ),
                     child: Icon(icon, color: color, size: 24),
                   )
-                : CategoryIcon(icon: icon, color: color, size: 46),
+                : CategoryIcon(icon: icon, color: color, size: 48),
           ),
           const SizedBox(height: Space.xs),
           Text(
